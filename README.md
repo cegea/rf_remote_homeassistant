@@ -150,6 +150,8 @@ The silences between messages are approximately 5 ms, which with a resolution of
 
 # CC1101-TOOL
 
+All credit goes to **Alam Laboda** for this amazing work at: https://github.com/mcore1976/cc1101-tool.
+
 To configure and use this tool, the following commands are used:
 
 setmodulation 2
@@ -168,3 +170,14 @@ addraw 0000000008e8e8e8e8e888e8e88eeee888000000
 
 playraw 300
 
+# RP2040 MQTT
+
+All credit goes to **Khoi Hoang** for this amazing work at: https://github.com/khoih-prog/AsyncMqttClient_Generic
+
+Use of the example to connect to a mqtt topic and parse the commands as if a serial interface where used. This is implemented with the multicore capabilities of the RP2040.
+
+# RP2040 Multicore and FIFO
+
+All credit goes to **Earle F. Philhower, III** for this amazing work at: https://github.com/earlephilhower/arduino-pico
+
+I´ve made an example to parse a pointer addres instead of whole commands to ease of use here (I might create a pull request): https://github.com/cegea/arduino-pico/blob/example/multicore_fifo/libraries/rp2040/examples/MulticoreFIFO/MulticoreFIFO.ino
