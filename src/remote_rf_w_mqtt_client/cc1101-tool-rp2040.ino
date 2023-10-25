@@ -1155,7 +1155,7 @@ void loop_cc1101_tool() {
   // index for serial port characters
   int i = 0;
   int availabeFifo = 0;
-  char **cmd;
+  char *cmd;
   size_t lenD;
 
   static char buffer[BUF_LENGTH];
@@ -1167,13 +1167,13 @@ void loop_cc1101_tool() {
       Serial.print("Ready data from MQTT: ");
       Serial.println(availabeFifo);
 
-      cmd = (char **)rp2040.fifo.pop();
+      cmd = reinterpret_cast<char*>(rp2040.fifo.pop());
       availabeFifo = rp2040.fifo.available();
-      Serial.printf("MQTT data: %s\n",*cmd);
-      Serial.print("["); Serial.print(*cmd); Serial.println("]");
+      Serial.printf("MQTT data: %s\n",cmd);
+      Serial.print("[C1]["); Serial.print(cmd); Serial.println("]");
 
       if (do_echo) Serial.write("\r\n");    // output CRLF
-      exec(*cmd);
+      exec(cmd);
     }
     while (Serial.available()) {
 

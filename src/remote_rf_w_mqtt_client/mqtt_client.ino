@@ -217,6 +217,8 @@ void onMqttUnsubscribe(const uint16_t& packetId)
 bool newMsg = false;
 static char *messageD;
 uint8_t msgLen = 0;
+const byte bufferSize = 64;  // Maximum buffer size
+char inputBuffer[bufferSize];  // Buffer for storing data
 
 
 void onMqttMessage(char* topic, char* payload, const AsyncMqttClientMessageProperties& properties,
@@ -224,8 +226,11 @@ void onMqttMessage(char* topic, char* payload, const AsyncMqttClientMessagePrope
 {
   char message[len + 1];
 
+  memset(inputBuffer, 0, sizeof inputBuffer);
   memcpy(message, payload, len);
   message[len] = 0;
+  memcpy(inputBuffer, message, len);
+  Serial.print("[C1]["); Serial.print(inputBuffer); Serial.println("]");
   messageD = message;
   newMsg = true;
 
@@ -234,8 +239,7 @@ void onMqttMessage(char* topic, char* payload, const AsyncMqttClientMessagePrope
   Serial.print("  topic: ");
   Serial.println(topic);
   Serial.print("  message: ");
-  Serial.print("["); Serial.print(message); Serial.println("]");
-  Serial.print("["); Serial.print(messageD); Serial.println("]");
+  Serial.println(message);
   Serial.print("  qos: ");
   Serial.println(properties.qos);
   Serial.print("  dup: ");
@@ -293,6 +297,6 @@ void loop_mqtt()
   connectToMqttTicker.update(); //update the ticker.
   if(newMsg){
     newMsg = false;
-    rp2040.fifo.push((uint32_t)&messageD);
+    rp2040.fifo.push(reinterpret_cast<uint32_t>(inputBuffer));
   }
 }
