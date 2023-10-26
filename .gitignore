@@ -1,0 +1,17 @@
+# Ignore compiled object files and executables
+*.o
+*.elf
+
+# Ignore any file named "secrets.h"
+secrets.h
+
+# Arduino build artifacts
+*.hex
+*.bin
+
+# RP2040-specific files and directories
+/.pio
+/*.bin
+/*.elf
+/*.hex
+*.db
