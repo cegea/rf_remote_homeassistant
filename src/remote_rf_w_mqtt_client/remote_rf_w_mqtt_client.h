@@ -15,6 +15,21 @@
   #warning Using RASPBERRY_PI_PICO_W with CYC43439 WiFi
 #endif
 
+// RP2040 pins SPI0
+#define SCK 2
+#define MISO 4
+#define MOSI 3
+#define SS 5
+#define GDO0 7
+#define GDO2 6
+
+typedef struct {
+    float frequency;
+    byte modulation;
+    char *code;
+} Remote_t;
+
+
 // secrets.h:
 // #define WIFI_SSID         "name"    // your network SSID (name)
 // #define WIFI_PASSWORD     "passwd"    // your network password (use for WPA, or use as key for WEP), length must be 8+

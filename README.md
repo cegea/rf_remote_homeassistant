@@ -1,4 +1,4 @@
-# rf_remote_homeassistant
+# Remote RF for HomeAssistant
 RF remote based on RP2040 and CC1101. For those sub-gigahertz remotes laying around. 
 
 Opening the remote control reveals that it has the integrated HS2260A, which is a clone of the PT2260.
