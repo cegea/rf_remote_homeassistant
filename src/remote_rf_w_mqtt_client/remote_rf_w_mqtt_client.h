@@ -2,6 +2,7 @@
 #define defines_h
 
 #include "secrets.h"
+#include "remote_rf.h"
 
 #if !( defined(ARDUINO_RASPBERRY_PI_PICO_W) )
   #error For RASPBERRY_PI_PICO_W only
@@ -23,10 +24,24 @@
 #define GDO0 7
 #define GDO2 6
 
+// Define constants for modulation types
+#define MODULATION_2_FSK 0
+#define MODULATION_GFSK 1
+#define MODULATION_ASK_OOK 2
+#define MODULATION_4_FSK 3
+#define MODULATION_MSK 4
+
+// Define frequency bands
+#define F868 868.23
+#define F433 433.92
+
 typedef struct {
+    const char* id;
     float frequency;
     byte modulation;
-    char *code;
+    const char* code;
+    int replays;
+    int symbolDuration_usec;
 } Remote_t;
 
 

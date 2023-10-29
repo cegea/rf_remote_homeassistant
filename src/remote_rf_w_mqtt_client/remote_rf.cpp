@@ -1,4 +1,5 @@
 #include <ELECHOUSE_CC1101_SRC_DRV.h>
+#include "remote_rf.h"
 
 // Portions of this code are based on the cc1101-tool repository by mcore1976.
 // Repository: https://github.com/mcore1976/cc1101-tool
@@ -11,11 +12,10 @@
  * modulation, encoding, power level, and more. Make sure to read the datasheet for the CC1101
  * for more information.
  */
-static void cc1101initialize(void)
-{
+void cc1101initialize(uint8_t sck, uint8_t miso, uint8_t mosi, uint8_t ss, uint8_t gdo0, uint8_t gdo2) {
     // initializing library with custom pins selected
-     ELECHOUSE_cc1101.setSpiPin(SCK, MISO, MOSI, SS);
-     ELECHOUSE_cc1101.setGDO(GDO0, GDO2);
+     ELECHOUSE_cc1101.setSpiPin(sck, miso, mosi, ss);
+     ELECHOUSE_cc1101.setGDO(gdo0, gdo2);
 
     // Main part to tune CC1101 with proper frequency, modulation and encoding    
     ELECHOUSE_cc1101.Init();                // must be set to initialize the cc1101!
@@ -90,17 +90,18 @@ void setModulation(byte modulationMode) {
 }
 
 /**
- * Transmit an RF code by playing it with a specified sampling interval.
+ * Transmit an RF code by replaying it with a specified symbol duration.
  *
- * This function transmits an RF code by playing it from a buffer with bit-banging and asynchronous
- * mode using the CC1101 module. It replays the RF code by setting GDO0 pin according to the bits
- * in the buffer and introduces a delay for the specified sampling interval.
+ * This function transmits an RF code by replaying it with a specified symbol duration using the CC1101 module.
+ * It replays the RF code by setting GDO0 pin according to the bits in the RF code, introducing a delay for
+ * the symbol duration between each symbol transmission.
  *
- * @param setting Sampling interval in microseconds.
+ * @param symbolDuration_usec Symbol duration in microseconds.
  * @param rfCode Pointer to the buffer containing the RF code to be transmitted.
  * @param codeSize Size of the RF code buffer.
+ * @param numReplays Number of times to replay the RF code.
  */
-void transmitRFCode(int setting, char* rfCode, int codeSize) {
+void transmitRFCode(int symbolDuration_usec, char* rfCode, int codeSize, int numReplays) {
   // Setup asynchronous mode on CC1101 and go into TX mode with GDO0 pin processing
   ELECHOUSE_cc1101.setCCMode(0);
   ELECHOUSE_cc1101.setPktFormat(3);
@@ -120,11 +121,13 @@ void transmitRFCode(int setting, char* rfCode, int codeSize) {
   // Blink LED RX - only for Arduino Pro Micro
   digitalWrite(RXLED, LOW); // Set the RX LED ON
 
-  for (int i = 0; i < codeSize; i++) {
-    byte codeByte = rfCode[i];
-    for (int j = 7; j >= 0; j--) {
-      digitalWrite(gdo0, bitRead(codeByte, j)); // Set GDO0 according to the bits in the RF code
-      delayMicroseconds(setting); // Delay for the selected sampling interval
+  for (int replay = 0; replay < numReplays; replay++) {
+    for (int i = 0; i < codeSize; i++) {
+      byte codeByte = rfCode[i];
+      for (int j = 7; j >= 0; j--) {
+        digitalWrite(gdo0, bitRead(codeByte, j)); // Set GDO0 according to the bits in the RF code
+        delayMicroseconds(symbolDuration_usec); // Delay for the specified symbol duration
+      }
     }
   }
 
@@ -142,82 +145,91 @@ void transmitRFCode(int setting, char* rfCode, int codeSize) {
   // pinMode(gdo0pin, INPUT);
 }
 
-// #include <pio.h>
 
-// // Define a PIO state machine instance for bit-banging
-// PIO pio;
-// uint sm;
+  // Blink LED RX - only for Arduino Pro Micro
+  digitalWrite(RXLED, HIGH); // Set the RX LED OFF
 
-// // Define a PIO program to bit-bang the RF code
-// const uint32_t pio_program[] = {
-//     0x0, // Instruction 0: Pull `sm[1]` low
-//     0x1, // Instruction 1: Pull `sm[1]` high
-//     0x2, // Instruction 2: Jump to instruction 0
-// };
+  #ifdef DEBUG0
+    Serial.print(F("\r\nTransmitting RF code complete.\r\n\r\n"));
+  #endif
 
-// /**
-//  * Transmit an RF code using PIO bit-banging.
-//  *
-//  * This function transmits an RF code by bit-banging it using the PIO state machine.
-//  *
-//  * @param setting Sampling interval in microseconds.
-//  * @param rfCode Pointer to the buffer containing the RF code to be transmitted.
-//  * @param codeSize Size of the RF code buffer.
-//  */
-// void transmitRFCode(int setting, char* rfCode, int codeSize) {
-//     // Setup PIO state machine for bit-banging
-//     pio_sm_claim(pio, pio_claim_unused_sm(pio, true));
-//     sm = pio_get_claimed_sm(pio);
+  // Set normal packet format again
+  ELECHOUSE_cc1101.setCCMode(1);
+  ELECHOUSE_cc1101.setPktFormat(0);
+  ELECHOUSE_cc1101.SetTx();
+  // pinMode(gdo0pin, INPUT);
+}
 
-//     // Load PIO program
-//     pio_program_init(pio, sm, sizeof(pio_program) / sizeof(pio_program[0]), pio_program, 0, 0);
+/**
+ * Find a remote control by its ID in the specified array of remote controls.
+ * 
+ * This function searches for a remote control in the specified array of `Remote_t`
+ * structures based on the provided `id`. If a matching remote control is found, a
+ * pointer to the `Remote_t` structure is returned; otherwise, NULL is returned.
+ *
+ * @param id The ID of the remote control to find.
+ * @param remoteControlsArray The array of remote controls to search in.
+ * @param arraySize The size of the remoteControlsArray.
+ * @return A pointer to the matching `Remote_t` structure or NULL if not found.
+ */
+Remote_t* findRemoteControlByID(const char* id, Remote_t remoteControlsArray[], size_t arraySize) {
+    for (size_t i = 0; i < arraySize; i++) {
+        if (strcmp(id, remoteControlsArray[i].id) == 0) {
+            return &remoteControlsArray[i];
+        }
+    }
+    return NULL; // Remote control not found
+}
 
-//     // Setup asynchronous mode on CC1101 and go into TX mode
-//     ELECHOUSE_cc1101.setCCMode(0);
-//     ELECHOUSE_cc1101.setPktFormat(3);
-//     ELECHOUSE_cc1101.SetTx();
+/**
+ * Process incoming commands from the FIFO using the specified array of remote controls.
+ * 
+ * This function processes incoming commands retrieved from the FIFO and executes them. 
+ * It reads commands from the FIFO, searches for the matching remote control by ID in
+ * the specified array, sets the frequency, and executes the code (if DEBUG is defined).
+ *
+ * @param remoteControlsArray The array of remote controls to search in.
+ * @param arraySize The size of the remoteControlsArray.
+ */
+void processIncomingCommands(Remote_t remoteControlsArray[], size_t arraySize) {
+  // Check for available data in the FIFO
+  int availableFifo = rp2040.fifo.available();
+  
+  while (availableFifo > 0) {
+    #ifdef DEBUG
+    Serial.print("Ready data from MQTT: ");
+    Serial.println(availableFifo);
+    #endif
+    
+    // Retrieve the command from the FIFO
+    char* id = reinterpret_cast<char*>(rp2040.fifo.pop());
+    
+    // Search for the matching remote control by ID
+    Remote_t* remote = findRemoteControlByID(id, remoteControlsArray, arraySize);
+    
+    if (remote) {
+      // Set the frequency
+      setFrequency(remote->frequency); // Implement this function
 
-//     #ifdef DEBUG0
-//         Serial.print(F("\r\nTransmitting RF code: "));
-//         for (int i = 0; i < codeSize; i++) {
-//             Serial.print(rfCode[i], HEX);
-//             Serial.print(" ");
-//         }
-//         Serial.println();
-//     #endif
+      // Set modulation
+      setModulation(remote->modulation);
+      
+      #ifdef DEBUG
+      Serial.printf("MQTT data: %s\n", id);
+      Serial.print("[C1]["); 
+      Serial.print(id);
+      Serial.println("]");
+      #endif
+      
+      // Execute the code with the specified symbol duration
+      transmitRFCode(remote->symbolDuration_usec, remote->code, strlen(remote->code));
+    } else {
+      #ifdef DEBUG
+      Serial.println("Remote control not found.");
+      #endif
+    }
+  }
+}
 
-//     pinMode(gdo0, OUTPUT);
 
-//     // Blink LED RX - only for Arduino Pro Micro
-//     digitalWrite(RXLED, LOW); // Set the RX LED ON
-
-//     for (int i = 0; i < codeSize; i++) {
-//         byte codeByte = rfCode[i];
-//         for (int j = 7; j >= 0; j--) {
-//             if (bitRead(codeByte, j)) {
-//                 // Set `sm[1]` high
-//                 pio_sm_exec(pio, sm, pio_encode_set(pio_pins, 1, 1));
-//             } else {
-//                 // Set `sm[1]` low
-//                 pio_sm_exec(pio, sm, pio_encode_set(pio_pins, 1, 0));
-//             }
-//             delayMicroseconds(setting); // Delay for the selected sampling interval
-//         }
-//     }
-
-//     // Blink LED RX - only for Arduino Pro Micro
-//     digitalWrite(RXLED, HIGH); // Set the RX LED OFF
-
-//     #ifdef DEBUG0
-//         Serial.print(F("\r\nTransmitting RF code complete.\r\n\r\n"));
-//     #endif
-
-//     // Set normal packet format again
-//     ELECHOUSE_cc1101.setCCMode(1);
-//     ELECHOUSE_cc1101.setPktFormat(0);
-//     ELECHOUSE_cc1101.SetTx();
-
-//     // Release the PIO state machine
-//     pio_sm_unclaim(pio, sm);
-// }
 
