@@ -11,7 +11,7 @@
   Built by Khoi Hoang https://github.com/khoih-prog/AsyncMqttClient_Generic
  *****************************************************************************************************************************/
 
-#include "defines.h"
+
 
 #include <WiFi.h>
 #include <Ticker.h>
@@ -24,7 +24,7 @@
 
 #include <Ticker.h>                   // https://github.com/sstaub/Ticker
 
-#define MQTT_HOST         IPAddress(192, 168, 1, 151)
+#define MQTT_HOST         IPAddress(192, 168, 1, 151) // Broker address
 #define MQTT_PORT         1883
 
 const char *remoteRfTopic  = "remote/rf";               // Topic to publish
