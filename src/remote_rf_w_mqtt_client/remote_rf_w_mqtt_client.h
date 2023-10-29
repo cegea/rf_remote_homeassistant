@@ -1,5 +1,5 @@
-#ifndef defines_h
-#define defines_h
+#ifndef remote_rf_w_mqtt_client_h
+#define remote_rf_w_mqtt_client_h
 
 #include "secrets.h"
 #include "remote_rf.h"
@@ -24,27 +24,6 @@
 #define GDO0 7
 #define GDO2 6
 
-// Define constants for modulation types
-#define MODULATION_2_FSK 0
-#define MODULATION_GFSK 1
-#define MODULATION_ASK_OOK 2
-#define MODULATION_4_FSK 3
-#define MODULATION_MSK 4
-
-// Define frequency bands
-#define F868 868.23
-#define F433 433.92
-
-typedef struct {
-    const char* id;
-    float frequency;
-    byte modulation;
-    const char* code;
-    int replays;
-    int symbolDuration_usec;
-} Remote_t;
-
-
 // secrets.h:
 // #define WIFI_SSID         "name"    // your network SSID (name)
 // #define WIFI_PASSWORD     "passwd"    // your network password (use for WPA, or use as key for WEP), length must be 8+
@@ -53,4 +32,4 @@ typedef struct {
 // #define MQTT_CREDENTIALS  "credentials";
 
 
-#endif    //defines_h
+#endif    //remote_rf_w_mqtt_client_h

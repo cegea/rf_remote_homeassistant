@@ -1,25 +1,35 @@
-#include <ELECHOUSE_CC1101_SRC_DRV.h>
 #include "remote_rf.h"
+#include <SPI.h>
 
 // Portions of this code are based on the cc1101-tool repository by mcore1976.
 // Repository: https://github.com/mcore1976/cc1101-tool
 
-/**
- * Initialize CC1101 board with default settings. You may change your preferences here.
- *
- * This function initializes the CC1101 board with default settings, allowing you to configure
- * various parameters for your specific use case. You can adjust settings such as frequency,
- * modulation, encoding, power level, and more. Make sure to read the datasheet for the CC1101
- * for more information.
- */
-void cc1101initialize(uint8_t sck, uint8_t miso, uint8_t mosi, uint8_t ss, uint8_t gdo0, uint8_t gdo2) {
+RemoteRF::RemoteRF(uint8_t sck, uint8_t miso, uint8_t mosi, uint8_t ss, uint8_t gdo0, uint8_t gdo2){
+    _sck =  sck;
+    _miso = miso;
+    _mosi = mosi;
+    _ss =  ss;
+    _gdo0 = gdo0;
+    _gdo2 = gdo2;
+}
+
+void RemoteRF::cc1101initialize() {
     // initializing library with custom pins selected
-     ELECHOUSE_cc1101.setSpiPin(sck, miso, mosi, ss);
-     ELECHOUSE_cc1101.setGDO(gdo0, gdo2);
+
+    SPI.setRX(_miso);
+    SPI.setTX(_mosi);
+    SPI.setSCK(_sck);
+    SPI.setCS(_ss);
+
+    gpio_init(_gdo0);
+    gpio_set_dir(_gdo0, GPIO_OUT);
+
+     ELECHOUSE_cc1101.setSpiPin(_sck, _miso, _mosi, _ss);
+     ELECHOUSE_cc1101.setGDO(_gdo0, _gdo2);
 
     // Main part to tune CC1101 with proper frequency, modulation and encoding    
     ELECHOUSE_cc1101.Init();                // must be set to initialize the cc1101!
-    ELECHOUSE_cc1101.setGDO0(gdo0);         // set lib internal gdo pin (gdo0). Gdo2 not use for this example.
+    ELECHOUSE_cc1101.setGDO0(_gdo0);         // set lib internal gdo pin (gdo0). Gdo2 not use for this example.
     ELECHOUSE_cc1101.setCCMode(1);          // set config for internal transmission mode. value 0 is for RAW recording/replaying
     ELECHOUSE_cc1101.setModulation(2);      // set modulation mode. 0 = 2-FSK, 1 = GFSK, 2 = ASK/OOK, 3 = 4-FSK, 4 = MSK.
     ELECHOUSE_cc1101.setMHZ(433.92);        // Here you can set your basic frequency. The lib calculates the frequency automatically (default = 433.92).The cc1101 can: 300-348 MHZ, 387-464MHZ and 779-928MHZ. Read More info from datasheet.
@@ -47,40 +57,18 @@ void cc1101initialize(uint8_t sck, uint8_t miso, uint8_t mosi, uint8_t ss, uint8
     ELECHOUSE_cc1101.setAppendStatus(0);    // When enabled, two status bytes will be appended to the payload of the packet. The status bytes contain RSSI and LQI values, as well as CRC OK.
 }
 
-/**
- * Configure the frequency and perform debugging operations if DEBUG0 is defined.
- *
- * This function configures the given frequency and provides optional debugging
- * output if DEBUG0 is defined. Debugging output includes information about the
- * configured frequency.
- *
- * @param frequency The frequency to be configured, in GHz.
- */
-void configureFrequency(float frequency) {
+void RemoteRF::configureFrequency(float frequency) {
   // Configure the frequency
   ELECHOUSE_cc1101.setMHZ(frequency);
   
   #ifdef DEBUG0
     Serial.print("Configuring frequency: ");
     Serial.print(frequency, 2); // Print the frequency with 2 decimal places
-    Serial.println(" GHz");
+    Serial.println(" MHz");
   #endif
 }
 
-/**
- * Set the modulation for the CC1101 module.
- *
- * This function sets the modulation mode for the CC1101 module. You can choose
- * from different modulation modes such as 2-FSK, GFSK, ASK/OOK, 4-FSK, and MSK.
- *
- * @param modulationMode The modulation mode to be set (0-4).
- *   0: 2-FSK
- *   1: GFSK
- *   2: ASK/OOK
- *   3: 4-FSK
- *   4: MSK
- */
-void setModulation(byte modulationMode) {
+void RemoteRF::setModulation(byte modulationMode) {
   ELECHOUSE_cc1101.setModulation(modulationMode);
   
   #ifdef DEBUG0
@@ -89,51 +77,40 @@ void setModulation(byte modulationMode) {
   #endif
 }
 
-/**
- * Transmit an RF code by replaying it with a specified symbol duration.
- *
- * This function transmits an RF code by replaying it with a specified symbol duration using the CC1101 module.
- * It replays the RF code by setting GDO0 pin according to the bits in the RF code, introducing a delay for
- * the symbol duration between each symbol transmission.
- *
- * @param symbolDuration_usec Symbol duration in microseconds.
- * @param rfCode Pointer to the buffer containing the RF code to be transmitted.
- * @param codeSize Size of the RF code buffer.
- * @param numReplays Number of times to replay the RF code.
- */
-void transmitRFCode(int symbolDuration_usec, char* rfCode, int codeSize, int numReplays) {
+
+void RemoteRF::transmitRFCode(int symbolDuration_usec, const char* rfCode, int codeSize, int numReplays) {
+
+  char buffer[codeSize];
+
   // Setup asynchronous mode on CC1101 and go into TX mode with GDO0 pin processing
   ELECHOUSE_cc1101.setCCMode(0);
   ELECHOUSE_cc1101.setPktFormat(3);
   ELECHOUSE_cc1101.SetTx();
 
+  hextoascii((byte *)buffer, (byte *)rfCode, strlen(rfCode));  
+  
   #ifdef DEBUG0
     Serial.print(F("\r\nTransmitting RF code: "));
-    for (int i = 0; i < codeSize; i++) {
-      Serial.print(rfCode[i], HEX);
-      Serial.print(" ");
+    for (int i = 0; i < codeSize/2; i++) {
+      Serial.print(buffer[i], HEX);
+      Serial.print("");
     }
     Serial.println();
   #endif
 
-  pinMode(gdo0, OUTPUT);
-
-  // Blink LED RX - only for Arduino Pro Micro
-  digitalWrite(RXLED, LOW); // Set the RX LED ON
+  pinMode(_gdo0, OUTPUT);
 
   for (int replay = 0; replay < numReplays; replay++) {
-    for (int i = 0; i < codeSize; i++) {
-      byte codeByte = rfCode[i];
+    for (int i = 0; i < codeSize/2; i++) {
+      byte codeByte = buffer[i];
       for (int j = 7; j >= 0; j--) {
-        digitalWrite(gdo0, bitRead(codeByte, j)); // Set GDO0 according to the bits in the RF code
+        digitalWrite(_gdo0, bitRead(codeByte, j)); // Set GDO0 according to the bits in the RF code
+        Serial.print(bitRead(codeByte, j));
         delayMicroseconds(symbolDuration_usec); // Delay for the specified symbol duration
       }
     }
   }
 
-  // Blink LED RX - only for Arduino Pro Micro
-  digitalWrite(RXLED, HIGH); // Set the RX LED OFF
-
   #ifdef DEBUG0
     Serial.print(F("\r\nTransmitting RF code complete.\r\n\r\n"));
   #endif
@@ -143,36 +120,16 @@ void transmitRFCode(int symbolDuration_usec, char* rfCode, int codeSize, int num
   ELECHOUSE_cc1101.setPktFormat(0);
   ELECHOUSE_cc1101.SetTx();
   // pinMode(gdo0pin, INPUT);
-}
-
-
-  // Blink LED RX - only for Arduino Pro Micro
-  digitalWrite(RXLED, HIGH); // Set the RX LED OFF
 
   #ifdef DEBUG0
     Serial.print(F("\r\nTransmitting RF code complete.\r\n\r\n"));
   #endif
 
-  // Set normal packet format again
-  ELECHOUSE_cc1101.setCCMode(1);
-  ELECHOUSE_cc1101.setPktFormat(0);
-  ELECHOUSE_cc1101.SetTx();
+  ELECHOUSE_cc1101.goSleep();
   // pinMode(gdo0pin, INPUT);
 }
 
-/**
- * Find a remote control by its ID in the specified array of remote controls.
- * 
- * This function searches for a remote control in the specified array of `Remote_t`
- * structures based on the provided `id`. If a matching remote control is found, a
- * pointer to the `Remote_t` structure is returned; otherwise, NULL is returned.
- *
- * @param id The ID of the remote control to find.
- * @param remoteControlsArray The array of remote controls to search in.
- * @param arraySize The size of the remoteControlsArray.
- * @return A pointer to the matching `Remote_t` structure or NULL if not found.
- */
-Remote_t* findRemoteControlByID(const char* id, Remote_t remoteControlsArray[], size_t arraySize) {
+Remote_t* RemoteRF::findRemoteControlByID(char* id, Remote_t remoteControlsArray[], size_t arraySize) {
     for (size_t i = 0; i < arraySize; i++) {
         if (strcmp(id, remoteControlsArray[i].id) == 0) {
             return &remoteControlsArray[i];
@@ -181,17 +138,7 @@ Remote_t* findRemoteControlByID(const char* id, Remote_t remoteControlsArray[], 
     return NULL; // Remote control not found
 }
 
-/**
- * Process incoming commands from the FIFO using the specified array of remote controls.
- * 
- * This function processes incoming commands retrieved from the FIFO and executes them. 
- * It reads commands from the FIFO, searches for the matching remote control by ID in
- * the specified array, sets the frequency, and executes the code (if DEBUG is defined).
- *
- * @param remoteControlsArray The array of remote controls to search in.
- * @param arraySize The size of the remoteControlsArray.
- */
-void processIncomingCommands(Remote_t remoteControlsArray[], size_t arraySize) {
+void RemoteRF::processIncomingCommands(Remote_t remoteControlsArray[], size_t arraySize) {
   // Check for available data in the FIFO
   int availableFifo = rp2040.fifo.available();
   
@@ -209,7 +156,7 @@ void processIncomingCommands(Remote_t remoteControlsArray[], size_t arraySize) {
     
     if (remote) {
       // Set the frequency
-      setFrequency(remote->frequency); // Implement this function
+      configureFrequency(remote->frequency); // Implement this function
 
       // Set modulation
       setModulation(remote->modulation);
@@ -222,7 +169,7 @@ void processIncomingCommands(Remote_t remoteControlsArray[], size_t arraySize) {
       #endif
       
       // Execute the code with the specified symbol duration
-      transmitRFCode(remote->symbolDuration_usec, remote->code, strlen(remote->code));
+      transmitRFCode(remote->symbolDuration_usec, remote->code, strlen(remote->code), remote->replays);
     } else {
       #ifdef DEBUG
       Serial.println("Remote control not found.");
@@ -231,5 +178,80 @@ void processIncomingCommands(Remote_t remoteControlsArray[], size_t arraySize) {
   }
 }
 
+// // convert char table to string with hex numbers
+// void RemoteRF::asciitohex(byte *ascii_ptr, byte *hex_ptr,int len)
+// {
+//     byte i,j,k;
+//     for(i = 0; i < len; i++)
+//     {
+//       // high byte first
+//       j = ascii_ptr[i] / 16;
+//       if (j>9) 
+//          { k = j - 10 + 65; }
+//       else 
+//          { k = j + 48; }
+//       hex_ptr[2*i] = k ;
+//       // low byte second
+//       j = ascii_ptr[i] % 16;
+//       if (j>9) 
+//          { k = j - 10 + 65; }
+//       else
+//          { k = j + 48; }
+//       hex_ptr[(2*i)+1] = k ; 
+//     };
+//     hex_ptr[(2*i)+2] = '\0' ; 
+// }
+
+
+// // convert string with hex numbers to array of bytes
+// void RemoteRF::hextoascii(char *ascii_ptr, const char *hex_ptr,int len)
+// {
+//     char i,j;
+//     for(i = 0; i < (len/2); i++)
+//      { 
+//      j = hex_ptr[i*2];
+//      if ((j>47) && (j<58))  ascii_ptr[i] = (j - 48) * 16;
+//      if ((j>64) && (j<71))  ascii_ptr[i] = (j - 55) * 16;
+//      if ((j>96) && (j<103)) ascii_ptr[i] = (j - 87) * 16;
+//      j = hex_ptr[i*2+1];
+//      if ((j>47) && (j<58))  ascii_ptr[i] = ascii_ptr[i]  + (j - 48);
+//      if ((j>64) && (j<71))  ascii_ptr[i] = ascii_ptr[i]  + (j - 55);
+//      if ((j>96) && (j<103)) ascii_ptr[i] = ascii_ptr[i]  + (j - 87);
+//      };
+//     ascii_ptr[i++] = '\0' ;
+// }
+
+void RemoteRF::asciitohex(char *hex, const char *ascii,int len)
+{
+  char value;
+  for (size_t i = 0; i < sizeof(ascii); i++){
+    value = ascii[i];
+    if (value < 'a'){
+			value = value-48;
+    }
+		else{
+			value = value-87;
+    }
+    hex[i] = value;
+  }
+}
+
+// convert string with hex numbers to array of bytes
+void RemoteRF::hextoascii(byte *ascii_ptr, byte *hex_ptr,int len)
+{
+    byte i,j;
+    for(i = 0; i < (len/2); i++)
+     { 
+     j = hex_ptr[i*2];
+     if ((j>47) && (j<58))  ascii_ptr[i] = (j - 48) * 16;
+     if ((j>64) && (j<71))  ascii_ptr[i] = (j - 55) * 16;
+     if ((j>96) && (j<103)) ascii_ptr[i] = (j - 87) * 16;
+     j = hex_ptr[i*2+1];
+     if ((j>47) && (j<58))  ascii_ptr[i] = ascii_ptr[i]  + (j - 48);
+     if ((j>64) && (j<71))  ascii_ptr[i] = ascii_ptr[i]  + (j - 55);
+     if ((j>96) && (j<103)) ascii_ptr[i] = ascii_ptr[i]  + (j - 87);
+     };
+    ascii_ptr[i++] = '\0' ;
+}
 
 
