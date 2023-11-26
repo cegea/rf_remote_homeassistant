@@ -105,7 +105,6 @@ void RemoteRF::transmitRFCode(int symbolDuration_usec, const char* rfCode, int c
       byte codeByte = buffer[i];
       for (int j = 7; j >= 0; j--) {
         digitalWrite(_gdo0, bitRead(codeByte, j)); // Set GDO0 according to the bits in the RF code
-        Serial.print(bitRead(codeByte, j));
         delayMicroseconds(symbolDuration_usec); // Delay for the specified symbol duration
       }
     }
