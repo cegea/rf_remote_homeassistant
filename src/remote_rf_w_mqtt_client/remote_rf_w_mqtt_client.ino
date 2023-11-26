@@ -16,18 +16,18 @@ Remote_t remoteControlArray[] = {
 // Get the size of the remoteControlArray
 size_t remoteControlArraySize = sizeof(remoteControlArray) / sizeof(remoteControlArray[0]);
 
-void setup() {
+void setup1() {
   remote.cc1101initialize();
 }
 
-void loop() {
+void loop1() {
   remote.processIncomingCommands(remoteControlArray,remoteControlArraySize);
 }
 
-void setup1() {
+void setup() {
   setup_mqtt();
 }
 
-void loop1() {
+void loop() {
   loop_mqtt();
 }
