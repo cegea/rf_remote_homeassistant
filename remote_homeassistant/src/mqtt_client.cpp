@@ -15,14 +15,20 @@
 
 #include <WiFi.h>
 #include <Ticker.h>
+#include "mqtt_client.h"
+#include <AsyncMqtt_Generic.h>
+#include "secrets.h"
+#include "main.h"
+#include "Arduino.h"
+#include "RP2040.h"
+
+
 
 // Check connection every 1s
 #define MQTT_CHECK_INTERVAL_MS     100
 
 // To be included only in main(), .ino with setup() to avoid `Multiple Definitions` Linker Error
 //#include <AsyncMqtt_Generic.h>
-
-#include <Ticker.h>                   // https://github.com/sstaub/Ticker
 
 #define MQTT_HOST         IPAddress(192, 168, 1, 151) // Broker address
 #define MQTT_PORT         1883
@@ -34,8 +40,6 @@ AsyncMqttClient mqttClient;
 
 int status = WL_IDLE_STATUS;
 
-void connectToMqtt();
-void connectToMqttLoop();
 
 // Repeat forever, millis() resolution
 Ticker connectToMqttTicker(connectToMqttLoop, MQTT_CHECK_INTERVAL_MS, 0, MICROS);

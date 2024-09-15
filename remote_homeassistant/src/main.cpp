@@ -1,5 +1,8 @@
-#include <AsyncMqtt_Generic.h>
-#include "remote_rf_w_mqtt_client.h"
+#include <Arduino.h>
+#include "main.h"
+#include "mqtt_client.h"
+#include "remote_rf.h"
+
 
 //Declare remoteRF
 

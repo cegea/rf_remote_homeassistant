@@ -4,9 +4,9 @@
 #include "secrets.h"
 #include "remote_rf.h"
 
-#if !( defined(ARDUINO_RASPBERRY_PI_PICO_W) )
-  #error For RASPBERRY_PI_PICO_W only
-#endif
+// #if !( defined(ARDUINO_RASPBERRY_PI_PICO_W) )
+//   #error For RASPBERRY_PI_PICO_W only
+// #endif
 
 // Debug Level from 0 to 4
 #define _ASYNCTCP_RP2040W_LOGLEVEL_         1
