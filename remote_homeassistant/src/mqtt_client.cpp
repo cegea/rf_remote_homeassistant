@@ -1,51 +1,61 @@
-/****************************************************************************************************************************
-  FullyFeatured_RP2040W.ino
+/*
+ Example of using a Stream object to store the message payload
 
-  AsyncMqttClient_Generic is a library for ESP32, ESP8266, Protenta_H7, Teensy41_QNEthernet, STM32F7, etc.
-  with current AsyncTCP support
+ Uses SRAM library: https://github.com/ennui2342/arduino-sram
+ but could use any Stream based class such as SD
 
-  Based on and modified from :
+  - connects to an MQTT server
+  - publishes "hello world" to the topic "outTopic"
+  - subscribes to the topic "inTopic"
+*/
 
-  1) async-mqtt-client (https://github.com/marvinroger/async-mqtt-client)
-
-  Built by Khoi Hoang https://github.com/khoih-prog/AsyncMqttClient_Generic
- *****************************************************************************************************************************/
-
-
-
+#include <SPI.h>
 #include <WiFi.h>
-#include <Ticker.h>
-#include "mqtt_client.h"
-#include <AsyncMqtt_Generic.h>
+#include <PubSubClient.h>
+#include <SRAM.h>
 #include "secrets.h"
-#include "main.h"
-#include "Arduino.h"
 #include "RP2040.h"
 
 
-
-// Check connection every 1s
-#define MQTT_CHECK_INTERVAL_MS     100
-
-// To be included only in main(), .ino with setup() to avoid `Multiple Definitions` Linker Error
-//#include <AsyncMqtt_Generic.h>
-
-#define MQTT_HOST         IPAddress(192, 168, 1, 151) // Broker address
-#define MQTT_PORT         1883
-
-const char *remoteRfTopic  = "remote/rf";               // Topic to publish
-const char *statusTopic  = "remote/status";               // Topic to publish
-
-AsyncMqttClient mqttClient;
-
-int status = WL_IDLE_STATUS;
-
-
-// Repeat forever, millis() resolution
-Ticker connectToMqttTicker(connectToMqttLoop, MQTT_CHECK_INTERVAL_MS, 0, MICROS);
+SRAM sram(4, SRAM_1024);
 
 bool connectedWiFi  = false;
-bool connectedMQTT  = false;
+int status = WL_IDLE_STATUS;
+
+bool newMsg = false;
+static char *messageD;
+uint8_t msgLen = 0;
+const byte bufferSize = 64;  // Maximum buffer size
+char inputBuffer[bufferSize];  // Buffer for storing data
+
+void callback(char* topic, byte* payload, unsigned int length) {
+  char message[length + 1];
+
+  sram.seek(1);
+  newMsg = true;
+
+  memset(inputBuffer, 0, sizeof inputBuffer);
+  memcpy(messageD, payload, length);
+  message[length] = 0;
+  memcpy(inputBuffer, message, length);
+  Serial.print("[C1]["); Serial.print(inputBuffer); Serial.println("]");
+  messageD = message;
+  newMsg = true;
+
+  rp2040.fifo.push(reinterpret_cast<uint32_t>(inputBuffer));
+
+  // do something with the message
+  for(uint8_t i=0; i<length; i++) {
+    Serial.write(sram.read());
+  }
+  Serial.println();
+
+  // Reset position for the next message to be stored
+  sram.seek(1);
+}
+
+WiFiClient w0Client;
+PubSubClient client(MQTT_HOST, MQTT_PORT, callback, w0Client, sram);
 
 void printWifiStatus()
 {
@@ -121,160 +131,29 @@ bool isWiFiConnected()
   return false;
 }
 
-void connectToMqttLoop()
-{
-  //if ( (WiFi.status() == WL_CONNECTED) && (WiFi.RSSI() != 0) )      // temporary workaround
-  if (isWiFiConnected())
-  {
-    if (!connectedMQTT)
-    {
-      mqttClient.connect();
-    }
-
-    if (!connectedWiFi)
-    {
-      Serial.println("WiFi reconnected");
-      connectedWiFi = true;
-    }
-  }
-  else
-  {
-    if (connectedWiFi)
-    {
-      Serial.println("WiFi disconnected. Reconnecting");
-      connectedWiFi = false;
-
-      connectToWifi();
-    }
-  }
-}
-
 void connectToMqtt()
 {
-  Serial.println("Connecting to MQTT...");
-  mqttClient.connect();
-}
+  if (isWiFiConnected()){
+    if (client.connect("arduinoClient")) {
+      client.publish("homeassistant/rf","hello world");
+      client.subscribe("homeassistant");
+    }
 
-void printSeparationLine()
-{
-  Serial.println("************************************************");
-}
+    sram.begin();
+    sram.seek(1);
 
-void onMqttConnect(bool sessionPresent)
-{
-  Serial.print("Connected to MQTT broker: ");
-  Serial.print(MQTT_HOST);
-  Serial.print(", port: ");
-  Serial.println(MQTT_PORT);
-  Serial.print("PubTopic: ");
-  Serial.println(remoteRfTopic);
-
-  connectedMQTT = true;
-
-  printSeparationLine();
-  Serial.print("Session present: ");
-  Serial.println(sessionPresent);
-
-  uint16_t packetIdSub = mqttClient.subscribe(remoteRfTopic, 2);
-  Serial.print("Subscribing at QoS 2, packetId: ");
-  Serial.println(packetIdSub);
-
-  mqttClient.publish(statusTopic, 0, true, "Ready");
-  Serial.println("Publishing at QoS 0");
-
-  // uint16_t packetIdPub1 = mqttClient.publish(PubTopic, 1, true, "RP2040W Test2");
-  // Serial.print("Publishing at QoS 1, packetId: ");
-  // Serial.println(packetIdPub1);
-
-  // uint16_t packetIdPub2 = mqttClient.publish(PubTopic, 2, true, "RP2040W Test3");
-  // Serial.print("Publishing at QoS 2, packetId: ");
-  // Serial.println(packetIdPub2);
-
-  printSeparationLine();
-}
-
-void onMqttDisconnect(AsyncMqttClientDisconnectReason reason)
-{
-  (void) reason;
-
-  connectedMQTT = false;
-
-  Serial.println("Disconnected from MQTT.");
-}
-
-void onMqttSubscribe(const uint16_t& packetId, const uint8_t& qos)
-{
-  Serial.println("Subscribe acknowledged.");
-  Serial.print("  packetId: ");
-  Serial.println(packetId);
-  Serial.print("  qos: ");
-  Serial.println(qos);
-}
-
-void onMqttUnsubscribe(const uint16_t& packetId)
-{
-  Serial.println("Unsubscribe acknowledged.");
-  Serial.print("  packetId: ");
-  Serial.println(packetId);
-}
-
-bool newMsg = false;
-static char *messageD;
-uint8_t msgLen = 0;
-const byte bufferSize = 64;  // Maximum buffer size
-char inputBuffer[bufferSize];  // Buffer for storing data
-
-
-void onMqttMessage(char* topic, char* payload, const AsyncMqttClientMessageProperties& properties,
-                   const size_t& len, const size_t& index, const size_t& total)
-{
-  char message[len + 1];
-
-  memset(inputBuffer, 0, sizeof inputBuffer);
-  memcpy(message, payload, len);
-  message[len] = 0;
-  memcpy(inputBuffer, message, len);
-  Serial.print("[C1]["); Serial.print(inputBuffer); Serial.println("]");
-  messageD = message;
-  newMsg = true;
-
-
-  Serial.println("Publish received.");
-  Serial.print("  topic: ");
-  Serial.println(topic);
-  Serial.print("  message: ");
-  Serial.println(message);
-  Serial.print("  qos: ");
-  Serial.println(properties.qos);
-  Serial.print("  dup: ");
-  Serial.println(properties.dup);
-  Serial.print("  retain: ");
-  Serial.println(properties.retain);
-  Serial.print("  len: ");
-  Serial.println(len);
-  Serial.print("  index: ");
-  Serial.println(index);
-  Serial.print("  total: ");
-  Serial.println(total);
-}
-
-void onMqttPublish(const uint16_t& packetId)
-{
-  Serial.println("Publish acknowledged.");
-  Serial.print("  packetId: ");
-  Serial.println(packetId);
+    Serial.begin(9600);
+  }
 }
 
 void setup_mqtt()
 { 
-  mqttClient.setCredentials(MQTT_USER, MQTT_CREDENTIALS); // May not be necessary.
   Serial.begin(115200);
 
   while (!Serial && millis() < 5000);
 
   Serial.print("\nStarting FullyFeature_RP2040W on ");
   Serial.println(BOARD_NAME);
-  Serial.println(ASYNC_MQTT_GENERIC_VERSION);
 
   ///////////////////////////////////
 
@@ -282,25 +161,15 @@ void setup_mqtt()
 
   ///////////////////////////////////
 
-  mqttClient.onConnect(onMqttConnect);
-  mqttClient.onDisconnect(onMqttDisconnect);
-  mqttClient.onSubscribe(onMqttSubscribe);
-  mqttClient.onUnsubscribe(onMqttUnsubscribe);
-  mqttClient.onMessage(onMqttMessage);
-  mqttClient.onPublish(onMqttPublish);
-
-  mqttClient.setServer(MQTT_HOST, MQTT_PORT);
-
-  connectToMqttTicker.start(); //start the ticker.
-
   connectToMqtt();
 }
 
 void loop_mqtt()
 {
-  connectToMqttTicker.update(); //update the ticker.
+  client.loop();
   if(newMsg){
     newMsg = false;
     rp2040.fifo.push(reinterpret_cast<uint32_t>(inputBuffer));
+    client.publish("homeassistant/rf","hello world");
   }
 }

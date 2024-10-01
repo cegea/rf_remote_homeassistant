@@ -1,5 +1,5 @@
-#ifndef remote_rf_w_mqtt_client_h
-#define remote_rf_w_mqtt_client_h
+#ifndef main_h
+#define main_h
 
 #include "secrets.h"
 #include "remote_rf.h"
@@ -32,4 +32,4 @@
 // #define MQTT_CREDENTIALS  "credentials";
 
 
-#endif    //remote_rf_w_mqtt_client_h
+#endif    //main_h
