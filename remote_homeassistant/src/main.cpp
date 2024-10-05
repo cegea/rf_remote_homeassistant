@@ -2,6 +2,7 @@
 #include "main.h"
 #include "mqtt_client.h"
 #include "remote_rf.h"
+#include "provisioning.h"
 
 
 //Declare remoteRF
@@ -19,18 +20,22 @@ Remote_t remoteControlArray[] = {
 // Get the size of the remoteControlArray
 size_t remoteControlArraySize = sizeof(remoteControlArray) / sizeof(remoteControlArray[0]);
 
-void setup1() {
-  remote.cc1101initialize();
-}
+// void setup1() {
+//   remote.cc1101initialize();
+// }
 
-void loop1() {
-  remote.processIncomingCommands(remoteControlArray,remoteControlArraySize);
-}
+// void loop1() {
+//   remote.processIncomingCommands(remoteControlArray,remoteControlArraySize);
+// }
 
 void setup() {
-  setup_mqtt();
+
+  provisioning_setup();
+
+  // setup_mqtt();
 }
 
 void loop() {
-  loop_mqtt();
+  provisioning_loop();
+  // loop_mqtt();
 }
