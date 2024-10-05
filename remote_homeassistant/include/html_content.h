@@ -36,22 +36,22 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
       <div class='form-floating'>
         <br/>
         <label>MQTT Host</label>
-        <input type='mqtt_host' class='form-control' name='password'>
+        <input type='text' class='form-control' name='mqtt_host'>
       </div>
       <div class='form-floating'>
         <br/>
         <label>MQTT Port</label>
-        <input type='mqtt_port' class='form-control' name='password'>
+        <input type='number' class='form-control' name='mqtt_port'>
       </div>
       <div class='form-floating'>
         <br/>
         <label>MQTT User</label>
-        <input type='mqtt_user' class='form-control' name='password'>
+        <input type='text' class='form-control' name='mqtt_user'>
       </div>
       <div class='form-floating'>
         <br/>
         <label>MQTT Password</label>
-        <input type='mqtt_pswd' class='form-control' name='password'>
+        <input type='password' class='form-control' name='mqtt_pswd'>
       </div>
       <br/><br/>
       <button type='submit'>Save</button>
