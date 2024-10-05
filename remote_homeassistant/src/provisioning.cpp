@@ -123,7 +123,7 @@ void __check_for_serial_commands() {
 void provisioning_setup(){
     EEPROM.begin(sizeof(struct wifi_settings) + sizeof(struct mqtt_settings) );
     EEPROM.get( 0, user_wifi );
-    EEPROM.get( sizeof(struct wifi_settings) + 1, user_mqtt );
+    EEPROM.get( sizeof(struct wifi_settings), user_mqtt );
 
     __print_credentials();
 
