@@ -30,12 +30,6 @@ size_t remoteControlArraySize = sizeof(remoteControlArray) / sizeof(remoteContro
 
 void setup() {
 
-  Serial1.setRX(1);
-  Serial1.setTX(0);
-  Serial1.begin(9600);
-
-  Serial1.print("\nStarting REMOTE RF");
-
   provisioning_setup();
 
   // setup_mqtt();

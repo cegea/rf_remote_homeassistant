@@ -119,13 +119,17 @@ void __check_for_serial_commands() {
     }
 }
 
-
 void provisioning_setup(){
+
+    Serial1.setRX(1);
+    Serial1.setTX(0);
+    Serial1.begin(9600);
+
+    Serial1.print("\nStarting REMOTE RF");
+
     EEPROM.begin(sizeof(struct wifi_settings) + sizeof(struct mqtt_settings) );
     EEPROM.get( 0, user_wifi );
     EEPROM.get( sizeof(struct wifi_settings), user_mqtt );
-
-    __print_credentials();
 
     __wifi_ap();
 
