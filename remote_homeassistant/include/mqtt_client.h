@@ -4,7 +4,4 @@
 void setup_mqtt();
 void loop_mqtt();
 
-void connectToMqtt();
-void connectToMqttLoop();
-
 #endif 
