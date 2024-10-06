@@ -15,6 +15,7 @@
 #include <SRAM.h>
 #include "secrets.h"
 #include "RP2040.h"
+#include "mdns.h"
 
   // You can change longer or shorter depending on your network response
   // Shorter => more responsive, but more ping traffic
@@ -23,6 +24,7 @@
 SRAM sram(4, SRAM_1024);
 
 bool connectedWiFi  = false;
+bool connectedMQTT  = false;
 int status = WL_IDLE_STATUS;
 
 bool newMsg = false;
@@ -30,6 +32,25 @@ static char *messageD;
 uint8_t msgLen = 0;
 const byte bufferSize = 64;  // Maximum buffer size
 char inputBuffer[bufferSize];  // Buffer for storing data
+
+WiFiUDP udp;
+MDNS mdns(udp);
+IPAddress __ip = INADDR_NONE;
+
+
+void resolver_callback(const char* name, IPAddress ip){
+  if (ip != INADDR_NONE) {
+    Serial1.print("The IP address for '");
+    Serial1.print(name);
+    Serial1.print("' is ");
+    Serial1.println(ip);
+    __ip = ip;
+  } else {
+    Serial1.print("Resolving '");
+    Serial1.print(name);
+    Serial1.println("' timed out.");
+  }
+}
 
 void callback(char* topic, byte* payload, unsigned int length) {
   char message[length + 1];
@@ -134,13 +155,15 @@ bool isWiFiConnected()
 
 void connectToMqtt()
 {
-  IPAddress __ip;
   uint8_t retries = 0;
   const char *hostname = "homeassistant";
-  
+
   if (isWiFiConnected()){
   printWifiStatus();
   Serial1.println("\nTry to connect to MQTT. Ping to server");
+
+  loop_mdns(mdns,hostname);
+
   if (__ip != INADDR_NONE)
   {
     Serial1.print("Resolved: ");
@@ -164,21 +187,23 @@ void connectToMqtt()
   if (WiFi.ping(__ip, theTTL) == theTTL)
   {
     Serial1.println("\nPing OK");
+    client.setServer(__ip,MQTT_PORT);
     // return true;
   }
   else{
     Serial1.println("\nPing NOT OK");
-    Serial1.println(WiFi.ping(MQTT_HOST, theTTL));
+    Serial1.println(WiFi.ping(__ip, theTTL));
   }
 
     if (client.connect("remote",MQTT_USER, MQTT_CREDENTIALS)) {
       Serial1.println("\nConnected to MQTT");
       client.publish("homeassistant/rf","hello world");
       client.subscribe("homeassistant");
+      connectedMQTT = true;
     }
 
-    sram.begin();
-    sram.seek(1);
+    // sram.begin();
+    // sram.seek(1);
 
   }
 }
@@ -191,21 +216,30 @@ void setup_mqtt()
 
   Serial1.print("\nStarting MQTT");
 
+  setup_mdns(mdns, resolver_callback);
+
   ///////////////////////////////////
   // To get here we should be connected to Wifi
   // connectToWifi();
 
   ///////////////////////////////////
 
-  connectToMqtt();
 }
 
 void loop_mqtt()
 {
-  client.loop();
+  // Serial1.print("\nLooping MQTT");
+
+  if (connectedMQTT){
+    client.loop();
+  }
+  else{
+    
+    connectToMqtt();
+  }
   if(newMsg){
     newMsg = false;
     rp2040.fifo.push(reinterpret_cast<uint32_t>(inputBuffer));
-    client.publish("homeassistant/rf","hello world");
+    client.publish("homeassistant/rf","looping");
   }
 }
