@@ -1,12 +1,12 @@
-#ifndef remote_rf_w_mqtt_client_h
-#define remote_rf_w_mqtt_client_h
+#ifndef main_h
+#define main_h
 
 #include "secrets.h"
 #include "remote_rf.h"
 
-#if !( defined(ARDUINO_RASPBERRY_PI_PICO_W) )
-  #error For RASPBERRY_PI_PICO_W only
-#endif
+// #if !( defined(ARDUINO_RASPBERRY_PI_PICO_W) )
+//   #error For RASPBERRY_PI_PICO_W only
+// #endif
 
 // Debug Level from 0 to 4
 #define _ASYNCTCP_RP2040W_LOGLEVEL_         1
@@ -31,5 +31,9 @@
 // #define MQTT_USER         "user";
 // #define MQTT_CREDENTIALS  "credentials";
 
+// typedef struct{
+//   bool wifi_connected
+// } remote_app;
 
-#endif    //remote_rf_w_mqtt_client_h
+
+#endif    //main_h

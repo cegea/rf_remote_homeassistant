@@ -1,5 +1,6 @@
 #include "remote_rf.h"
 #include <SPI.h>
+#include "ELECHOUSE_CC1101_SRC_DRV.h"
 
 // Portions of this code are based on the cc1101-tool repository by mcore1976.
 // Repository: https://github.com/mcore1976/cc1101-tool
