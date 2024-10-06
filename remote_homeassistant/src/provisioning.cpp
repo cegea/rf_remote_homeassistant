@@ -32,16 +32,12 @@ void __print_credentials(){
     Serial1.println("\nWiFi Settings:");
     Serial1.print("SSID: ");
     Serial1.println(user_wifi.ssid);
-    Serial1.print("Password: ");
-    Serial1.println(user_wifi.password);
     Serial1.print("MQTT Host: ");
     Serial1.println(user_mqtt.host);
     Serial1.print("MQTT Port: ");
     Serial1.println(user_mqtt.port);
     Serial1.print("MQTT User: ");
     Serial1.println(user_mqtt.user);
-    Serial1.print("MQTT Password: ");
-    Serial1.println(user_mqtt.passwd);
 }
 
 void __handlePortal(){
