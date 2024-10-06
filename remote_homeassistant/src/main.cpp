@@ -32,6 +32,12 @@ size_t remoteControlArraySize = sizeof(remoteControlArray) / sizeof(remoteContro
 
 void setup()
 {
+	Serial1.setRX(1);
+    Serial1.setTX(0);
+    Serial1.begin(9600);
+
+    Serial1.println("\nStarting REMOTE RF");
+
 	provisioning_setup();
 
 	if (WiFi.status() != WL_CONNECTED)
@@ -56,4 +62,10 @@ void loop()
 	{
 		loop_mqtt();
 	}
+  	// Serial1.print("\nLooping Main");
+  	// Serial1.print("\nWiFi.getMode()");
+  	// Serial1.print(WiFi.getMode());
+  	// Serial1.print("\nWiFi.status()");
+  	// Serial1.print(WiFi.status());
+
 }
