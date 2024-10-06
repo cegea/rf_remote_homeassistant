@@ -31,5 +31,9 @@
 // #define MQTT_USER         "user";
 // #define MQTT_CREDENTIALS  "credentials";
 
+// typedef struct{
+//   bool wifi_connected
+// } remote_app;
+
 
 #endif    //main_h

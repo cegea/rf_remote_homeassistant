@@ -16,6 +16,9 @@
 #include "secrets.h"
 #include "RP2040.h"
 
+  // You can change longer or shorter depending on your network response
+  // Shorter => more responsive, but more ping traffic
+  static uint8_t theTTL = 10;
 
 SRAM sram(4, SRAM_1024);
 
@@ -38,7 +41,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
   memcpy(messageD, payload, length);
   message[length] = 0;
   memcpy(inputBuffer, message, length);
-  Serial.print("[C1]["); Serial.print(inputBuffer); Serial.println("]");
+  Serial1.print("[C1]["); Serial1.print(inputBuffer); Serial1.println("]");
   messageD = message;
   newMsg = true;
 
@@ -46,9 +49,9 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
   // do something with the message
   for(uint8_t i=0; i<length; i++) {
-    Serial.write(sram.read());
+    Serial1.write(sram.read());
   }
-  Serial.println();
+  Serial1.println();
 
   // Reset position for the next message to be stored
   sram.seek(1);
@@ -60,19 +63,19 @@ PubSubClient client(MQTT_HOST, MQTT_PORT, callback, w0Client, sram);
 void printWifiStatus()
 {
   // print the SSID of the network you're attached to:
-  Serial.print("Connected to SSID: ");
-  Serial.println(WiFi.SSID());
+  Serial1.print("\nConnected to SSID: ");
+  Serial1.println(WiFi.SSID());
 
   // print your board's IP address:
   IPAddress ip = WiFi.localIP();
-  Serial.print("Local IP Address: ");
-  Serial.println(ip);
+  Serial1.print("Local IP Address: ");
+  Serial1.println(ip);
 
   // print the received signal strength:
   long rssi = WiFi.RSSI();
-  Serial.print("Signal strength (RSSI):");
-  Serial.print(rssi);
-  Serial.println(" dBm");
+  Serial1.print("Signal strength (RSSI):");
+  Serial1.print(rssi);
+  Serial1.println(" dBm");
 }
 
 bool connectToWifi()
@@ -80,14 +83,14 @@ bool connectToWifi()
   // check for the WiFi module:
   if (WiFi.status() == WL_NO_MODULE)
   {
-    Serial.println("Communication with WiFi module failed!");
+    Serial1.println("Communication with WiFi module failed!");
 
     // don't continue
     while (true);
   }
 
-  Serial.print(F("Connecting to SSID: "));
-  Serial.println(WIFI_SSID);
+  Serial1.print(F("Connecting to SSID: "));
+  Serial1.println(WIFI_SSID);
 
 #define MAX_NUM_WIFI_CONNECT_TRIES_PER_LOOP       20
 
@@ -104,7 +107,7 @@ bool connectToWifi()
   if (status != WL_CONNECTED)
   {
     // Restart for Portenta as something is very wrong
-    Serial.println("Resetting. Can't connect to any WiFi");
+    Serial1.println("Resetting. Can't connect to any WiFi");
 
     NVIC_SystemReset();
   }
@@ -118,11 +121,9 @@ bool connectToWifi()
 
 bool isWiFiConnected()
 {
-  // You can change longer or shorter depending on your network response
-  // Shorter => more responsive, but more ping traffic
-  static uint8_t theTTL = 10;
-
   // Use ping() to test TCP connections
+  Serial1.println("\nGateway IP: ");
+  Serial1.print(WiFi.gatewayIP());
   if (WiFi.ping(WiFi.gatewayIP(), theTTL) == theTTL)
   {
     return true;
@@ -133,8 +134,45 @@ bool isWiFiConnected()
 
 void connectToMqtt()
 {
+  IPAddress __ip;
+  uint8_t retries = 0;
+  const char *hostname = "homeassistant";
+  
   if (isWiFiConnected()){
-    if (client.connect("arduinoClient")) {
+  printWifiStatus();
+  Serial1.println("\nTry to connect to MQTT. Ping to server");
+  if (__ip != INADDR_NONE)
+  {
+    Serial1.print("Resolved: ");
+    Serial1.println(__ip);
+  }
+  else
+  {
+    Serial1.println("Not resolved");
+  }
+  // while(WiFi.hostByName(hostname, __ip) != 1){
+  //   if(retries++>200){
+  //     break;
+  //   }
+  // }
+  // WiFi.hostByName(MQTT_HOST, __ip);
+  Serial1.print("\nIP of MQTT host ");
+  Serial1.print(hostname);
+  Serial1.print(" is ");
+  Serial1.println(__ip);
+
+  if (WiFi.ping(__ip, theTTL) == theTTL)
+  {
+    Serial1.println("\nPing OK");
+    // return true;
+  }
+  else{
+    Serial1.println("\nPing NOT OK");
+    Serial1.println(WiFi.ping(MQTT_HOST, theTTL));
+  }
+
+    if (client.connect("remote",MQTT_USER, MQTT_CREDENTIALS)) {
+      Serial1.println("\nConnected to MQTT");
       client.publish("homeassistant/rf","hello world");
       client.subscribe("homeassistant");
     }
@@ -142,22 +180,20 @@ void connectToMqtt()
     sram.begin();
     sram.seek(1);
 
-    Serial.begin(9600);
   }
 }
 
 void setup_mqtt()
 { 
-  Serial.begin(115200);
+  // Serial1.begin(115200);
 
-  while (!Serial && millis() < 5000);
+  // while (!Serial1 && millis() < 5000);
 
-  Serial.print("\nStarting FullyFeature_RP2040W on ");
-  Serial.println(BOARD_NAME);
+  Serial1.print("\nStarting MQTT");
 
   ///////////////////////////////////
-
-  connectToWifi();
+  // To get here we should be connected to Wifi
+  // connectToWifi();
 
   ///////////////////////////////////
 

@@ -83,7 +83,7 @@ void __handlePortal(){
 
 void __wifi_ap(){
 
-    Serial1.println("Try to connect to WIFI");
+    Serial1.println("\nTry to connect to WIFI");
     __print_credentials();
 
     // WiFi.mode(WIFI_STA);
@@ -148,6 +148,17 @@ void provisioning_setup(){
 }
 
 void provisioning_loop(){
-    __check_for_serial_commands();
-    server.handleClient();
+    // Serial1.println(WiFi.status());
+    if(WiFi.getMode() >= WIFI_AP)
+    {
+        __check_for_serial_commands();
+        server.handleClient();
+    }
+    else if (WiFi.getMode() == WIFI_STA && WiFi.status() == WL_CONNECTED)
+    {
+        server.close();
+        // Serial1.end(); // Close debug resource for others to use
+    }
+    
+
 }

@@ -3,6 +3,8 @@
 #include "mqtt_client.h"
 #include "remote_rf.h"
 #include "provisioning.h"
+#include <WiFi.h>
+#include "mdns.h"
 
 
 //Declare remoteRF
@@ -28,14 +30,30 @@ size_t remoteControlArraySize = sizeof(remoteControlArray) / sizeof(remoteContro
 //   remote.processIncomingCommands(remoteControlArray,remoteControlArraySize);
 // }
 
-void setup() {
+void setup()
+{
+	provisioning_setup();
 
-  provisioning_setup();
-
-  // setup_mqtt();
+	if (WiFi.status() != WL_CONNECTED)
+	{
+		// Follow provisioning and restart
+		// TODO: Avoid manual restarting if possible. NVIC_SystemReset();
+	}
+	else if (WiFi.status() == WL_CONNECTED)
+	{
+		setup_mqtt();
+	}
 }
 
-void loop() {
-  provisioning_loop();
-  // loop_mqtt();
+void loop()
+{
+	// Serial1.println(WiFi.status());
+	if (WiFi.getMode() >= WIFI_AP)
+	{
+		provisioning_loop();
+	}
+	else if (WiFi.getMode() == WIFI_STA && WiFi.status() == WL_CONNECTED)
+	{
+		loop_mqtt();
+	}
 }
