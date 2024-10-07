@@ -2,6 +2,10 @@
 #ifndef html_content_h
 #define html_content_h
 
+/**
+ * HTML strings to be posted by the server when in AP WiFi mode.
+ * 
+ */
 const char HTML_PAGE[] PROGMEM = R"rawliteral(
 <!doctype html>
 <html lang='en'>

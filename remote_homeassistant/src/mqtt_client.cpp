@@ -7,11 +7,50 @@
 #include "mdns.h"
 
 // Private function declarations
+
+/**
+ * @brief Function that gets called when the hostname is found
+ * 
+ * @param name 
+ * @param ip 
+ */
 void __resolver_callback(const char* name, IPAddress ip);
+
+/**
+ * @brief Callback for the publish and the subscribe
+ * 
+ * @param topic 
+ * @param payload 
+ * @param length 
+ */
 void __mqtt_callback(char* topic, byte* payload, unsigned int length);
+
+/**
+ * @brief UART the WiFi status
+ * 
+ */
 void __printWifiStatus(void);
+
+/**
+ * @brief Try to stablish WiFi connection (most likely will disappear)
+ * 
+ * @return true 
+ * @return false 
+ */
 bool __connectToWifi(void);
+
+/**
+ * @brief Check WiFi connection. (Most likely will disappear)
+ * 
+ * @return true 
+ * @return false 
+ */
 bool __isWiFiConnected(void);
+
+/**
+ * @brief Resolve MQTT server and connect to it.
+ * 
+ */
 void __connectToMqtt(void);
 
 static uint8_t theTTL = 10;
