@@ -5,6 +5,7 @@
 #include "secrets.h"
 #include "RP2040.h"
 #include "mdns.h"
+#include "provisioning.h"
 
 // Private function declarations
 
@@ -67,6 +68,7 @@ char inputBuffer[bufferSize];  // Buffer for storing data
 
 WiFiUDP udp;
 MDNS mdns(udp);
+
 IPAddress __ip = INADDR_NONE;
 
 WiFiClient w0Client;
@@ -128,6 +130,9 @@ void __printWifiStatus()
 
 bool __connectToWifi()
 {
+  wifi_settings user_wifi = {};
+  user_wifi = read_EEPROM_wifi_credentials();
+
   // check for the WiFi module:
   if (WiFi.status() == WL_NO_MODULE)
   {
@@ -138,7 +143,7 @@ bool __connectToWifi()
   }
 
   Serial1.print(F("Connecting to SSID: "));
-  Serial1.println(WIFI_SSID);
+  Serial1.println(user_wifi.ssid);
 
 #define MAX_NUM_WIFI_CONNECT_TRIES_PER_LOOP       20
 
@@ -147,7 +152,7 @@ bool __connectToWifi()
   // attempt to connect to WiFi network
   while ( (status != WL_CONNECTED) && (numWiFiConnectTries++ < MAX_NUM_WIFI_CONNECT_TRIES_PER_LOOP) )
   {
-    status = WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+    status = WiFi.begin(user_wifi.ssid, user_wifi.password);
 
     delay(500);
   }
@@ -182,8 +187,11 @@ bool __isWiFiConnected()
 
 void __connectToMqtt()
 {
+  mqtt_settings user_mqtt = {};
+  user_mqtt = read_EEPROM_mqtt_credentials();
+
   uint8_t retries = 0;
-  const char *hostname = "homeassistant";
+  const char *hostname = user_mqtt.host;
 
   if (__isWiFiConnected()){
   __printWifiStatus();
@@ -202,13 +210,13 @@ void __connectToMqtt()
   if (WiFi.ping(__ip, theTTL) == theTTL)
   {
     Serial1.println("\nPing OK");
-    client.setServer(__ip,MQTT_PORT);
+    client.setServer(__ip,user_mqtt.port);
   }
   else{
     Serial1.println("\nPing NOT OK");
   }
 
-    if (client.connect("remote",MQTT_USER, MQTT_CREDENTIALS)) {
+    if (client.connect("remote",user_mqtt.user, user_mqtt.passwd)) {
       Serial1.println("\nConnected to MQTT");
       client.publish("remote/status","init");
       client.subscribe("remote/payload");
