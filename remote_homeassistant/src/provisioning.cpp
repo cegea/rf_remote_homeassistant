@@ -9,9 +9,29 @@ wifi_settings user_wifi = {};
 mqtt_settings user_mqtt = {};
 
 // Private functions
+
+/**
+ * @brief Serve HTTP requests from clients
+ * 
+ */
 void __handlePortal(void);
+
+/**
+ * @brief Try to connect to WiFi with the stored provided.
+ * 
+ */
 void __wifi_ap(void);
+
+/**
+ * @brief Output stored credentials over UART
+ * 
+ */
 void __print_credentials(void);
+
+/**
+ * @brief Command server over UART
+ * 
+ */
 void __check_for_serial_commands(void);
 
 // Global
