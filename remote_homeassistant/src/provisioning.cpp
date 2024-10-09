@@ -5,18 +5,8 @@
 #include <EEPROM.h>
 #include "html_content.h"
 
-// Type def
-struct wifi_settings {
-  char ssid[30];
-  char password[30];
-} user_wifi = {};
-
-struct mqtt_settings {
-  char host[30];
-  uint16_t port;
-  char user[30];
-  char passwd[30];
-} user_mqtt = {};
+wifi_settings user_wifi = {};
+mqtt_settings user_mqtt = {};
 
 // Private functions
 void __handlePortal(void);
@@ -86,7 +76,7 @@ void __wifi_ap(){
     WiFi.begin(user_wifi.ssid, user_wifi.password);
 }
 
-void __clean_wifi_credentials(){
+void clean_wifi_credentials(){
     memset(user_wifi.ssid, 0, sizeof(user_wifi.ssid));
     memset(user_wifi.password, 0, sizeof(user_wifi.password));
     memset(user_mqtt.host, 0, sizeof(user_mqtt.host));
@@ -107,7 +97,7 @@ void __check_for_serial_commands() {
         command.trim();
 
         if (command.equals("--delete_wifi_credentials")) {
-            __clean_wifi_credentials();
+            clean_wifi_credentials();
             Serial1.println("Credentials erased.");
         } else {
             Serial1.println("Command not recognized.");
@@ -115,13 +105,24 @@ void __check_for_serial_commands() {
     }
 }
 
+mqtt_settings read_EEPROM_mqtt_credentials(){
+    EEPROM.get( sizeof(struct wifi_settings), user_mqtt );
+    return user_mqtt;
+}
+
+wifi_settings read_EEPROM_wifi_credentials(){
+    EEPROM.get( 0, user_wifi );
+    return user_wifi;
+}
+
 void provisioning_setup(){
 
     Serial1.print("\nStart credentials provisioning");
 
     EEPROM.begin(sizeof(struct wifi_settings) + sizeof(struct mqtt_settings) );
-    EEPROM.get( 0, user_wifi );
-    EEPROM.get( sizeof(struct wifi_settings), user_mqtt );
+    
+    read_EEPROM_wifi_credentials();
+    read_EEPROM_mqtt_credentials();
 
     __wifi_ap();
 
