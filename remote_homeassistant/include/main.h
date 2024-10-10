@@ -24,16 +24,19 @@
 #define GDO0 7
 #define GDO2 6
 
-// secrets.h:
-// #define WIFI_SSID         "name"    // your network SSID (name)
-// #define WIFI_PASSWORD     "passwd"    // your network password (use for WPA, or use as key for WEP), length must be 8+
+// EEPROM MAP (In RP204 is 4k of flash)
+#define PROVISIONING_ADDR 0
+#define PROVISIONING_SIZE 256
+#define MQTT_ADDR PROVISIONING_SIZE
+#define MQTT_SIZE 128
+#define RADIO_ADDR MQTT_ADDR + MQTT_SIZE
+#define RADIO_SIZE 1024
+#define EEPROM_SIZE PROVISIONING_SIZE + MQTT_SIZE + RADIO_SIZE
 
-// #define MQTT_USER         "user";
-// #define MQTT_CREDENTIALS  "credentials";
+static_assert(PROVISIONING_ADDR == 0, "Do not change the map randomly");
+static_assert(MQTT_ADDR == PROVISIONING_ADDR + PROVISIONING_SIZE, "MQTT address not properly calculated");
+static_assert(RADIO_ADDR == PROVISIONING_ADDR + PROVISIONING_SIZE + MQTT_SIZE, "Radio address not properly calculated");
 
-// typedef struct{
-//   bool wifi_connected
-// } remote_app;
 
 
 #endif    //main_h

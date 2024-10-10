@@ -74,8 +74,8 @@ void __handlePortal(){
 
         __print_credentials();
 
-        EEPROM.put(0, user_wifi);
-        EEPROM.put( sizeof(struct wifi_settings), user_mqtt );
+        EEPROM.put(WIFI_SETTINGS_ADDR, user_wifi);
+        EEPROM.put(MQTT_SETTINGS_ADDR, user_mqtt );
         EEPROM.commit();
 
         Serial1.println("\nKeys updated");
@@ -104,8 +104,8 @@ void clean_wifi_credentials(){
     memset(user_mqtt.user, 0, sizeof(user_mqtt.user));
     memset(user_mqtt.passwd, 0, sizeof(user_mqtt.passwd));
 
-    EEPROM.put(0, user_wifi);
-    EEPROM.put( sizeof(struct wifi_settings), user_mqtt );
+    EEPROM.put(WIFI_SETTINGS_ADDR, user_wifi);
+    EEPROM.put(MQTT_SETTINGS_ADDR, user_mqtt );
     EEPROM.commit();
 }
 
@@ -126,20 +126,18 @@ void __check_for_serial_commands() {
 }
 
 mqtt_settings read_EEPROM_mqtt_credentials(){
-    EEPROM.get( sizeof(struct wifi_settings), user_mqtt );
+    EEPROM.get(MQTT_SETTINGS_ADDR, user_mqtt );
     return user_mqtt;
 }
 
 wifi_settings read_EEPROM_wifi_credentials(){
-    EEPROM.get( 0, user_wifi );
+    EEPROM.get(WIFI_SETTINGS_ADDR, user_wifi );
     return user_wifi;
 }
 
 void provisioning_setup(){
 
     Serial1.print("\nStart credentials provisioning");
-
-    EEPROM.begin(sizeof(struct wifi_settings) + sizeof(struct mqtt_settings) );
     
     read_EEPROM_wifi_credentials();
     read_EEPROM_mqtt_credentials();

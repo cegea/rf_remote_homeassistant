@@ -5,6 +5,7 @@
 #include "provisioning.h"
 #include <WiFi.h>
 #include "mdns.h"
+#include <EEPROM.h>
 
 
 //Declare remoteRF
@@ -35,6 +36,8 @@ void setup()
 	Serial1.setRX(1);
     Serial1.setTX(0);
     Serial1.begin(9600);
+
+    EEPROM.begin(EEPROM_SIZE); 
 
     Serial1.println("\nStarting REMOTE RF");
 

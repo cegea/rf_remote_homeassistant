@@ -72,7 +72,7 @@ MDNS mdns(udp);
 IPAddress __ip = INADDR_NONE;
 
 WiFiClient w0Client;
-PubSubClient client(MQTT_HOST, MQTT_PORT, __mqtt_callback, w0Client);
+PubSubClient client("host", 1234, __mqtt_callback, w0Client);
 
 void __resolver_callback(const char* name, IPAddress ip){
   if (ip != INADDR_NONE) {
