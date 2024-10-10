@@ -17,13 +17,13 @@ struct mqtt_settings {
 } ;
 
 // Defines
-#define WIFI_SETTINGS_SIZE sizeof(struct wifi_settings)
-#define MQTT_SETTINGS_SIZE sizeof(struct mqtt_settings)
-#define PROVISIONING_EEPROM_SIZE PROVISIONING_SIZE
-#define WIFI_SETTINGS_ADDR PROVISIONING_ADDR
-#define MQTT_SETTINGS_ADDR PROVISIONING_ADDR + WIFI_SETTINGS_SIZE
+#define __WIFI_SETTINGS_SIZE sizeof(struct wifi_settings)
+#define __MQTT_SETTINGS_SIZE sizeof(struct mqtt_settings)
+#define __PROVISIONING_EEPROM_SIZE PROVISIONING_SIZE
+#define __WIFI_SETTINGS_ADDR PROVISIONING_ADDR
+#define __MQTT_SETTINGS_ADDR PROVISIONING_ADDR + __WIFI_SETTINGS_SIZE
 
-static_assert(WIFI_SETTINGS_SIZE + MQTT_SETTINGS_SIZE <= PROVISIONING_EEPROM_SIZE, "Max size for provisioning reached");
+static_assert(__WIFI_SETTINGS_SIZE + __MQTT_SETTINGS_SIZE <= __PROVISIONING_EEPROM_SIZE, "Max size for provisioning reached");
 
 void provisioning_setup(void);
 void provisioning_loop(void);
