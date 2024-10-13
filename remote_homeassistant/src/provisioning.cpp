@@ -32,7 +32,7 @@ void __print_credentials(void);
  * @brief Command server over UART
  * 
  */
-void __check_for_serial_commands(void);
+void command_server_provisioning(void);
 
 // Global
 WebServer server(80);
@@ -111,7 +111,7 @@ void clean_wifi_credentials(){
     EEPROM.commit();
 }
 
-void __check_for_serial_commands() {
+void command_server_provisioning() {
     if (DEBUG_RP2040_PORT.available() > 0) {
         String command = DEBUG_RP2040_PORT.readStringUntil('\n');  // Read until a newline is encountered
         
@@ -166,7 +166,7 @@ void provisioning_setup(){
 void provisioning_loop(){
     if(WiFi.getMode() >= WIFI_AP)
     {
-        __check_for_serial_commands();
+        command_server_provisioning();
         server.handleClient();
     }
     else if (WiFi.getMode() == WIFI_STA && WiFi.status() == WL_CONNECTED)

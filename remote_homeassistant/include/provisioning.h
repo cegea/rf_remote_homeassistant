@@ -28,6 +28,7 @@ static_assert(__WIFI_SETTINGS_SIZE + __MQTT_SETTINGS_SIZE <= __PROVISIONING_EEPR
 void provisioning_setup(void);
 void provisioning_loop(void);
 void clean_wifi_credentials(void);
+void command_server_provisioning(void);
 
 /**
  * @brief Read from EEPROM the MQTT data
