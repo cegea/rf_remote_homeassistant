@@ -39,6 +39,7 @@ WebServer server(80);
 
 // Functions
 void __print_credentials(){
+#ifdef DEBUG_PROVISIONING
     Serial1.println("\nWiFi Settings:");
     Serial1.print("SSID: ");
     Serial1.println(user_wifi.ssid);
@@ -48,6 +49,7 @@ void __print_credentials(){
     Serial1.println(user_mqtt.port);
     Serial1.print("MQTT User: ");
     Serial1.println(user_mqtt.user);
+#endif
 }
 
 void __handlePortal(){
@@ -78,8 +80,6 @@ void __handlePortal(){
         EEPROM.put(__MQTT_SETTINGS_ADDR, user_mqtt );
         EEPROM.commit();
 
-        Serial1.println("\nKeys updated");
-
         server.send(200,   "text/html",  HTML_SUCCESS_PAGE);
     } 
     else {
@@ -89,7 +89,9 @@ void __handlePortal(){
 
 void __wifi_ap(){
 
+#ifdef DEBUG_PROVISIONING
     Serial1.println("\nTry to connect to WIFI");
+#endif
     __print_credentials();
 
     // WiFi.mode(WIFI_STA);
@@ -137,8 +139,9 @@ wifi_settings read_EEPROM_wifi_credentials(){
 
 void provisioning_setup(){
 
+#ifdef DEBUG_PROVISIONING
     Serial1.print("\nStart credentials provisioning");
-    
+#endif
     read_EEPROM_wifi_credentials();
     read_EEPROM_mqtt_credentials();
 
@@ -150,7 +153,9 @@ void provisioning_setup(){
         if (tries++ > 3) {
             WiFi.mode(WIFI_AP);
             WiFi.softAP("Remote Provisioning", "provisioning");
+#ifdef DEBUG_PROVISIONING
             Serial1.println("\nWiFi AP(Remote Provisioning, provisioning)");
+#endif
             break;
         }
     }
@@ -159,7 +164,6 @@ void provisioning_setup(){
 }
 
 void provisioning_loop(){
-    // Serial1.println(WiFi.status());
     if(WiFi.getMode() >= WIFI_AP)
     {
         __check_for_serial_commands();
@@ -168,7 +172,6 @@ void provisioning_loop(){
     else if (WiFi.getMode() == WIFI_STA && WiFi.status() == WL_CONNECTED)
     {
         server.close();
-        // Serial1.end(); // Close debug resource for others to use
     }
     
 

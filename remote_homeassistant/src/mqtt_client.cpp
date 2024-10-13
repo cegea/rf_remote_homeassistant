@@ -78,9 +78,11 @@ void __resolver_callback(const char* name, IPAddress ip){
   if (ip != INADDR_NONE) {
     __ip = ip;
   } else {
+#ifdef DEBUG_PROVISIONING
     Serial1.print("Resolving '");
     Serial1.print(name);
     Serial1.println("' timed out.");
+#endif
   }
 }
 
@@ -88,9 +90,9 @@ void __mqtt_callback(char* topic, byte* payload, unsigned int length) {
   char message[length + 1];
 
   newMsg = true;
-
+#ifdef DEBUG_PROVISIONING
   Serial1.print("\n[Core 1][Length:"); Serial1.print(length); Serial1.println("]");
-
+#endif
   if (length > sizeof(inputBuffer)){
     client.publish("remote/error","Payload too long");
   }
@@ -99,8 +101,10 @@ void __mqtt_callback(char* topic, byte* payload, unsigned int length) {
     memcpy(messageD, payload, length);
     message[length] = '\n';
     memcpy(inputBuffer, message, length);
+#ifdef DEBUG_PROVISIONING
     Serial1.print("\n[Core 1][Topic:"); Serial1.print(topic); Serial1.println("]");
     Serial1.print("\n[");Serial1.print(inputBuffer); Serial1.println("]");
+#endif
     messageD = message;
     newMsg = true;
   }
@@ -112,6 +116,7 @@ void __mqtt_callback(char* topic, byte* payload, unsigned int length) {
 
 void __printWifiStatus()
 {
+#ifdef DEBUG_PROVISIONING
   // print the SSID of the network you're attached to:
   Serial1.print("\nConnected to SSID: ");
   Serial1.println(WiFi.SSID());
@@ -126,6 +131,7 @@ void __printWifiStatus()
   Serial1.print("Signal strength (RSSI):");
   Serial1.print(rssi);
   Serial1.println(" dBm");
+#endif
 }
 
 bool __connectToWifi()
@@ -141,9 +147,10 @@ bool __connectToWifi()
     // don't continue
     while (true);
   }
-
+#ifdef DEBUG_PROVISIONING
   Serial1.print(F("Connecting to SSID: "));
   Serial1.println(user_wifi.ssid);
+#endif
 
 #define MAX_NUM_WIFI_CONNECT_TRIES_PER_LOOP       20
 
@@ -160,8 +167,9 @@ bool __connectToWifi()
   if (status != WL_CONNECTED)
   {
     // Restart for Portenta as something is very wrong
+#ifdef DEBUG_PROVISIONING    
     Serial1.println("Resetting. Can't connect to any WiFi");
-
+#endif
     NVIC_SystemReset();
   }
 
@@ -175,8 +183,10 @@ bool __connectToWifi()
 bool __isWiFiConnected()
 {
   // Use ping() to test TCP connections
+#ifdef DEBUG_PROVISIONING
   Serial1.println("\nGateway IP: ");
   Serial1.print(WiFi.gatewayIP());
+#ifdef DEBUG_PROVISIONING
   if (WiFi.ping(WiFi.gatewayIP(), theTTL) == theTTL)
   {
     return true;
@@ -195,29 +205,38 @@ void __connectToMqtt()
 
   if (__isWiFiConnected()){
   __printWifiStatus();
+#ifdef DEBUG_PROVISIONING
   Serial1.println("\nTry to connect to MQTT. Ping to server");
-
+#endif
   if (__ip != INADDR_NONE)
   {
     loop_mdns(mdns,hostname);
+#ifdef DEBUG_PROVISIONING
     Serial1.print("Resolved: ");
     Serial1.print("\nIP of MQTT host ");
     Serial1.print(hostname);
     Serial1.print(" is ");
     Serial1.println(__ip);
+#endif
   }  
 
   if (WiFi.ping(__ip, theTTL) == theTTL)
   {
+#ifdef DEBUG_PROVISIONING
     Serial1.println("\nPing OK");
+#endif
     client.setServer(__ip,user_mqtt.port);
   }
   else{
+#ifdef DEBUG_PROVISIONING
     Serial1.println("\nPing NOT OK");
+#endif
   }
 
     if (client.connect("remote",user_mqtt.user, user_mqtt.passwd)) {
+#ifdef DEBUG_PROVISIONING
       Serial1.println("\nConnected to MQTT");
+#endif
       client.publish("remote/status","init");
       client.subscribe("remote/payload");
       client.subscribe("remote/rf");
@@ -228,7 +247,9 @@ void __connectToMqtt()
 
 void setup_mqtt()
 {
+#ifdef DEBUG_PROVISIONING
   Serial1.println("\nStarting MQTT");
+#endif
   setup_mdns(mdns, __resolver_callback);
 }
 
