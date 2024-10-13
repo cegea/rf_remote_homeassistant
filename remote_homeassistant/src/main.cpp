@@ -33,13 +33,13 @@ size_t remoteControlArraySize = sizeof(remoteControlArray) / sizeof(remoteContro
 
 void setup()
 {
-	Serial1.setRX(1);
-    Serial1.setTX(0);
-    Serial1.begin(9600);
+	DEBUG_RP2040_PORT.setRX(1);
+    DEBUG_RP2040_PORT.setTX(0);
+    DEBUG_RP2040_PORT.begin(9600);
 
     EEPROM.begin(EEPROM_SIZE); 
 
-    Serial1.println("\nStarting REMOTE RF");
+    DEBUG_RP2040_PORT.println("\nStarting REMOTE RF");
 
 	provisioning_setup();
 
@@ -56,7 +56,7 @@ void setup()
 
 void loop()
 {
-	// Serial1.println(WiFi.status());
+	// DEBUG_RP2040_PORT.println(WiFi.status());
 	if (WiFi.getMode() >= WIFI_AP)
 	{
 		provisioning_loop();
@@ -65,10 +65,10 @@ void loop()
 	{
 		loop_mqtt();
 	}
-  	// Serial1.print("\nLooping Main");
-  	// Serial1.print("\nWiFi.getMode()");
-  	// Serial1.print(WiFi.getMode());
-  	// Serial1.print("\nWiFi.status()");
-  	// Serial1.print(WiFi.status());
+  	// DEBUG_RP2040_PORT.print("\nLooping Main");
+  	// DEBUG_RP2040_PORT.print("\nWiFi.getMode()");
+  	// DEBUG_RP2040_PORT.print(WiFi.getMode());
+  	// DEBUG_RP2040_PORT.print("\nWiFi.status()");
+  	// DEBUG_RP2040_PORT.print(WiFi.status());
 
 }
