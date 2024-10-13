@@ -2,6 +2,7 @@
 #include <WiFi.h>
 #include <PubSubClient.h>
 #include <SRAM.h>
+#include <string>
 #include "secrets.h"
 #include "RP2040.h"
 #include "mdns.h"
@@ -243,6 +244,14 @@ void __connectToMqtt()
       connectedMQTT = true;
     }
   }
+}
+
+void MQTT_publish_time_since_init(){
+  if (connectedMQTT)
+  {
+    client.publish("homeassistant/init_since", std::to_string(rp2040.getCycleCount64()).c_str());
+  }
+  
 }
 
 void setup_mqtt()
