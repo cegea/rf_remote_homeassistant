@@ -62,10 +62,7 @@ bool connectedMQTT  = false;
 int status = WL_IDLE_STATUS;
 
 bool newMsg = false;
-static char *messageD;
-uint8_t msgLen = 0;
-const byte bufferSize = 64;  // Maximum buffer size
-char inputBuffer[bufferSize];  // Buffer for storing data
+char inputBuffer[MQTT_MAX_PACKET_SIZE] PSRAM;  // Buffer for storing data
 
 WiFiUDP udp;
 MDNS mdns(udp);
@@ -80,32 +77,32 @@ void __resolver_callback(const char* name, IPAddress ip){
     __ip = ip;
   } else {
 #ifdef DEBUG_PROVISIONING
-    DEBUG_RP2040_PORT.print("Resolving '");
-    DEBUG_RP2040_PORT.print(name);
-    DEBUG_RP2040_PORT.println("' timed out.");
+    DEBUG_APPLICATION_PORT.print("Resolving '");
+    DEBUG_APPLICATION_PORT.print(name);
+    DEBUG_APPLICATION_PORT.println("' timed out.");
 #endif
   }
 }
 
 void __mqtt_callback(char* topic, byte* payload, unsigned int length) {
   char message[length + 1];
-
+  char *messageD;
+  uint8_t msgLen = 0;
   newMsg = true;
 #ifdef DEBUG_PROVISIONING
-  DEBUG_RP2040_PORT.print("\n[Core 1][Length:"); DEBUG_RP2040_PORT.print(length); DEBUG_RP2040_PORT.println("]");
+  DEBUG_APPLICATION_PORT.print("\n[Core 1][Length:"); DEBUG_APPLICATION_PORT.print(length); DEBUG_APPLICATION_PORT.println("]");
 #endif
   if (length > sizeof(inputBuffer)){
     client.publish("remote/error","Payload too long");
   }
   else{
-    memset(inputBuffer, 0, sizeof(inputBuffer));
-    memcpy(messageD, payload, length);
-    message[length] = '\n';
-    memcpy(inputBuffer, message, length);
+    bzero(inputBuffer, sizeof(inputBuffer));
+    rp2040.memcpyDMA(inputBuffer, payload, length);
 #ifdef DEBUG_PROVISIONING
-    DEBUG_RP2040_PORT.print("\n[Core 1][Topic:"); DEBUG_RP2040_PORT.print(topic); DEBUG_RP2040_PORT.println("]");
-    DEBUG_RP2040_PORT.print("\n[");DEBUG_RP2040_PORT.print(inputBuffer); DEBUG_RP2040_PORT.println("]");
+    DEBUG_APPLICATION_PORT.print("\n[Core 1][Topic:"); DEBUG_APPLICATION_PORT.print(topic); DEBUG_APPLICATION_PORT.println("]");
+    DEBUG_APPLICATION_PORT.print("\n[");DEBUG_APPLICATION_PORT.print(inputBuffer); DEBUG_APPLICATION_PORT.println("]");
 #endif
+    MQTT_command_server(topic, payload);
     messageD = message;
     newMsg = true;
   }
