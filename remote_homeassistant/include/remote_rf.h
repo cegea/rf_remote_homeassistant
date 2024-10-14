@@ -28,6 +28,11 @@ typedef struct {
     int symbolDuration_usec;
 } Remote_t;
 
+extern volatile Remote_t remoteControl PSRAM;
+
+// Declare the mutex for accessing remoteData
+extern mutex_t remoteDataMutex;
+
 class RemoteRF
 {
 public:
@@ -110,6 +115,7 @@ public:
      * @param arraySize The size of the remoteControlsArray.
      */
     void processIncomingCommands(Remote_t remoteControlsArray[], size_t arraySize);
+    void processIncomingCommands(void);
 
 
 private:

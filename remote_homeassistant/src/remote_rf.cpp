@@ -63,9 +63,9 @@ void RemoteRF::configureFrequency(float frequency) {
   ELECHOUSE_cc1101.setMHZ(frequency);
   
   #ifdef DEBUG0
-    Serial.print("Configuring frequency: ");
-    Serial.print(frequency, 2); // Print the frequency with 2 decimal places
-    Serial.println(" MHz");
+    DEBUG_APPLICATION_PORT.print("Configuring frequency: ");
+    DEBUG_APPLICATION_PORT.print(frequency, 2); // Print the frequency with 2 decimal places
+    DEBUG_APPLICATION_PORT.println(" MHz");
   #endif
 }
 
@@ -73,8 +73,8 @@ void RemoteRF::setModulation(byte modulationMode) {
   ELECHOUSE_cc1101.setModulation(modulationMode);
   
   #ifdef DEBUG0
-    Serial.print("Setting modulation mode: ");
-    Serial.println(modulationMode);
+    DEBUG_APPLICATION_PORT.print("Setting modulation mode: ");
+    DEBUG_APPLICATION_PORT.println(modulationMode);
   #endif
 }
 
@@ -91,12 +91,12 @@ void RemoteRF::transmitRFCode(int symbolDuration_usec, const char* rfCode, int c
   hextoascii((byte *)buffer, (byte *)rfCode, strlen(rfCode));  
   
   #ifdef DEBUG0
-    Serial.print(F("\r\nTransmitting RF code: "));
+    DEBUG_APPLICATION_PORT.print(F("\r\nTransmitting RF code: "));
     for (int i = 0; i < codeSize/2; i++) {
-      Serial.print(buffer[i], HEX);
-      Serial.print("");
+      DEBUG_APPLICATION_PORT.print(buffer[i], HEX);
+      DEBUG_APPLICATION_PORT.print("");
     }
-    Serial.println();
+    DEBUG_APPLICATION_PORT.println();
   #endif
 
   pinMode(_gdo0, OUTPUT);
@@ -112,7 +112,7 @@ void RemoteRF::transmitRFCode(int symbolDuration_usec, const char* rfCode, int c
   }
 
   #ifdef DEBUG0
-    Serial.print(F("\r\nTransmitting RF code complete.\r\n\r\n"));
+    DEBUG_APPLICATION_PORT.print(F("\r\nTransmitting RF code complete.\r\n\r\n"));
   #endif
 
   // Set normal packet format again
@@ -122,7 +122,7 @@ void RemoteRF::transmitRFCode(int symbolDuration_usec, const char* rfCode, int c
   // pinMode(gdo0pin, INPUT);
 
   #ifdef DEBUG0
-    Serial.print(F("\r\nTransmitting RF code complete.\r\n\r\n"));
+    DEBUG_APPLICATION_PORT.print(F("\r\nTransmitting RF code complete.\r\n\r\n"));
   #endif
 
   ELECHOUSE_cc1101.goSleep();
@@ -144,8 +144,8 @@ void RemoteRF::processIncomingCommands(Remote_t remoteControlsArray[], size_t ar
   
   while (availableFifo > 0) {
     #ifdef DEBUG
-    Serial.print("Ready data from MQTT: ");
-    Serial.println(availableFifo);
+    DEBUG_APPLICATION_PORT.print("Ready data from MQTT: ");
+    DEBUG_APPLICATION_PORT.println(availableFifo);
     #endif
     
     // Retrieve the command from the FIFO
@@ -162,19 +162,54 @@ void RemoteRF::processIncomingCommands(Remote_t remoteControlsArray[], size_t ar
       setModulation(remote->modulation);
       
       #ifdef DEBUG
-      Serial.printf("MQTT data: %s\n", id);
-      Serial.print("[C1]["); 
-      Serial.print(id);
-      Serial.println("]");
+      DEBUG_APPLICATION_PORT.printf("MQTT data: %s\n", id);
+      DEBUG_APPLICATION_PORT.print("[C1]["); 
+      DEBUG_APPLICATION_PORT.print(id);
+      DEBUG_APPLICATION_PORT.println("]");
       #endif
       
       // Execute the code with the specified symbol duration
       transmitRFCode(remote->symbolDuration_usec, remote->code, strlen(remote->code), remote->replays);
     } else {
       #ifdef DEBUG
-      Serial.println("Remote control not found.");
+      DEBUG_APPLICATION_PORT.println("Remote control not found.");
       #endif
     }
+  }
+}
+
+void RemoteRF::processIncomingCommands() {
+  // Check for available data in the FIFO
+  int availableFifo = rp2040.fifo.available();
+  mutex_enter_blocking(&remoteDataMutex);
+  DEBUG_APPLICATION_PORT.print("No data");
+  
+  while (availableFifo > 0) {
+    #ifdef DEBUG_RADIO
+    DEBUG_APPLICATION_PORT.print("Ready data from MQTT: ");
+    DEBUG_APPLICATION_PORT.println(availableFifo);
+    #endif
+    
+    // Delete flag
+    rp2040.fifo.pop();
+    
+    // Set the frequency
+    configureFrequency(remoteControl.frequency); // Implement this function
+
+    // Set modulation
+    setModulation(remoteControl.modulation);
+    
+    #ifdef DEBUG_RADIO
+    // DEBUG_APPLICATION_PORT.printf("MQTT data: %s\n", id);
+    DEBUG_APPLICATION_PORT.print("[C1]["); 
+    DEBUG_APPLICATION_PORT.print(remoteControl.id);
+    DEBUG_APPLICATION_PORT.println("]");
+    #endif
+    
+    // Execute the code with the specified symbol duration
+    transmitRFCode(remoteControl.symbolDuration_usec, remoteControl.code, strlen(remoteControl.code), remoteControl.replays);
+
+    mutex_exit(&remoteDataMutex); 
   }
 }
 
