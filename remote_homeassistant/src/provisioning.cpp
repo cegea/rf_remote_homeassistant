@@ -40,15 +40,15 @@ WebServer server(80);
 // Functions
 void __print_credentials(){
 #ifdef DEBUG_PROVISIONING
-    DEBUG_RP2040_PORT.println("\nWiFi Settings:");
-    DEBUG_RP2040_PORT.print("SSID: ");
-    DEBUG_RP2040_PORT.println(user_wifi.ssid);
-    DEBUG_RP2040_PORT.print("MQTT Host: ");
-    DEBUG_RP2040_PORT.println(user_mqtt.host);
-    DEBUG_RP2040_PORT.print("MQTT Port: ");
-    DEBUG_RP2040_PORT.println(user_mqtt.port);
-    DEBUG_RP2040_PORT.print("MQTT User: ");
-    DEBUG_RP2040_PORT.println(user_mqtt.user);
+    DEBUG_APPLICATION_PORT.println("\nWiFi Settings:");
+    DEBUG_APPLICATION_PORT.print("SSID: ");
+    DEBUG_APPLICATION_PORT.println(user_wifi.ssid);
+    DEBUG_APPLICATION_PORT.print("MQTT Host: ");
+    DEBUG_APPLICATION_PORT.println(user_mqtt.host);
+    DEBUG_APPLICATION_PORT.print("MQTT Port: ");
+    DEBUG_APPLICATION_PORT.println(user_mqtt.port);
+    DEBUG_APPLICATION_PORT.print("MQTT User: ");
+    DEBUG_APPLICATION_PORT.println(user_mqtt.user);
 #endif
 }
 
@@ -90,7 +90,7 @@ void __handlePortal(){
 void __wifi_ap(){
 
 #ifdef DEBUG_PROVISIONING
-    DEBUG_RP2040_PORT.println("\nTry to connect to WIFI");
+    DEBUG_APPLICATION_PORT.println("\nTry to connect to WIFI");
 #endif
     __print_credentials();
 
@@ -98,7 +98,7 @@ void __wifi_ap(){
     WiFi.begin(user_wifi.ssid, user_wifi.password);
 }
 
-void clean_wifi_credentials(){
+void provisioning_delete_credentials(){
     memset(user_wifi.ssid, 0, sizeof(user_wifi.ssid));
     memset(user_wifi.password, 0, sizeof(user_wifi.password));
     memset(user_mqtt.host, 0, sizeof(user_mqtt.host));
@@ -112,17 +112,17 @@ void clean_wifi_credentials(){
 }
 
 void command_server_provisioning() {
-    if (DEBUG_RP2040_PORT.available() > 0) {
-        String command = DEBUG_RP2040_PORT.readStringUntil('\n');  // Read until a newline is encountered
+    if (DEBUG_APPLICATION_PORT.available() > 0) {
+        String command = DEBUG_APPLICATION_PORT.readStringUntil('\n');  // Read until a newline is encountered
         
         // Remove any leading or trailing whitespace
         command.trim();
 
         if (command.equals("--delete_wifi_credentials")) {
-            clean_wifi_credentials();
-            DEBUG_RP2040_PORT.println("Credentials erased.");
+            provisioning_delete_credentials();
+            DEBUG_APPLICATION_PORT.println("Credentials erased.");
         } else {
-            DEBUG_RP2040_PORT.println("Command not recognized.");
+            DEBUG_APPLICATION_PORT.println("Command not recognized.");
         }
     }
 }
@@ -140,7 +140,7 @@ wifi_settings read_EEPROM_wifi_credentials(){
 void provisioning_setup(){
 
 #ifdef DEBUG_PROVISIONING
-    DEBUG_RP2040_PORT.print("\nStart credentials provisioning");
+    DEBUG_APPLICATION_PORT.print("\nStart credentials provisioning");
 #endif
     read_EEPROM_wifi_credentials();
     read_EEPROM_mqtt_credentials();
@@ -154,7 +154,7 @@ void provisioning_setup(){
             WiFi.mode(WIFI_AP);
             WiFi.softAP("Remote Provisioning", "provisioning");
 #ifdef DEBUG_PROVISIONING
-            DEBUG_RP2040_PORT.println("\nWiFi AP(Remote Provisioning, provisioning)");
+            DEBUG_APPLICATION_PORT.println("\nWiFi AP(Remote Provisioning, provisioning)");
 #endif
             break;
         }
