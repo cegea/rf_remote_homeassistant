@@ -5,10 +5,10 @@
 // Define the callback function signature (based on what ArduinoMDNS expects)
 // void resolver_callback(const char* name, const IPAddress& ip) {
 //   // Handle the name resolution result here
-//   DEBUG_RP2040_PORT.print("Resolved: ");
-//   DEBUG_RP2040_PORT.print(name);
-//   DEBUG_RP2040_PORT.print(" to IP: ");
-//   DEBUG_RP2040_PORT.println(ip);
+//   DEBUG_APPLICATION_PORT.print("Resolved: ");
+//   DEBUG_APPLICATION_PORT.print(name);
+//   DEBUG_APPLICATION_PORT.print(" to IP: ");
+//   DEBUG_APPLICATION_PORT.println(ip);
 // }
 
 // Setup MDNS and pass the callback function as an argument
@@ -24,9 +24,9 @@ void setup_mdns(MDNS& mdns, void (*callback)(const char*, IPAddress)) {
 void loop_mdns(MDNS& mdns, const char* hostname) {   
   // Check if mDNS is already resolving a host name
   if (!mdns.isResolvingName()) {
-    DEBUG_RP2040_PORT.print("Resolving '");
-    DEBUG_RP2040_PORT.print(hostname);
-    DEBUG_RP2040_PORT.println("' via Multicast DNS (Bonjour)...");
+    DEBUG_APPLICATION_PORT.print("Resolving '");
+    DEBUG_APPLICATION_PORT.print(hostname);
+    DEBUG_APPLICATION_PORT.println("' via Multicast DNS (Bonjour)...");
     
     // Resolve the host name via mDNS
     mdns.resolveName(hostname, TIMEOUT);

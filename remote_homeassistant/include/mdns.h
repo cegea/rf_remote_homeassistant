@@ -1,7 +1,6 @@
 #ifndef mdns_client_h
 #define mdns_client_h
 
-#include <SPI.h>
 #include <WiFi.h>
 #include <WiFiUdp.h>
 #include <ArduinoMDNS.h>
