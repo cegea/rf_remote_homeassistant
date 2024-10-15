@@ -21,6 +21,9 @@ void RemoteRF::cc1101initialize() {
     SPI.setTX(_mosi);
     SPI.setSCK(_sck);
     SPI.setCS(_ss);
+    SPI.begin(true);
+
+    SPISettings spisettings(1000000, MSBFIRST, SPI_MODE0);
 
     gpio_init(_gdo0);
     gpio_set_dir(_gdo0, GPIO_OUT);
@@ -188,8 +191,8 @@ void RemoteRF::processIncomingCommands(Remote_t remoteControlsArray[], size_t ar
 void RemoteRF::processIncomingCommands() {
   // Check for available data in the FIFO
   int availableFifo = rp2040.fifo.available();
-  mutex_enter_blocking(&remoteDataMutex);
-  DEBUG_APPLICATION_PORT.print("No data");
+  // mutex_enter_blocking(&remoteDataMutex);
+  // DEBUG_APPLICATION_PORT.print("No data");
   
   while (availableFifo > 0) {
     #ifdef DEBUG_RADIO
@@ -199,7 +202,14 @@ void RemoteRF::processIncomingCommands() {
     
     // Delete flag
     rp2040.fifo.pop();
-    
+#ifdef DEBUG_RADIO
+    DEBUG_APPLICATION_PORT.println("RF Frequency: " + String(remoteControl.frequency, 2));
+    DEBUG_APPLICATION_PORT.println("RF ID: " + String(remoteControl.id));
+    DEBUG_APPLICATION_PORT.println("RF Replays: " + String(remoteControl.replays));
+    DEBUG_APPLICATION_PORT.println("RF Payload: " + String(remoteControl.code));
+    DEBUG_APPLICATION_PORT.println("RF Symbol Duration: " + String(remoteControl.symbolDuration_usec));
+    DEBUG_APPLICATION_PORT.println("RF Modulation: " + String(remoteControl.modulation));
+#endif    
     // Set the frequency
     configureFrequency(remoteControl.frequency); // Implement this function
 
@@ -216,7 +226,7 @@ void RemoteRF::processIncomingCommands() {
     // Execute the code with the specified symbol duration
     transmitRFCode(remoteControl.symbolDuration_usec, remoteControl.code, strlen(remoteControl.code), remoteControl.replays);
 
-    mutex_exit(&remoteDataMutex); 
+    // mutex_exit(&remoteDataMutex); 
   }
 }
 
