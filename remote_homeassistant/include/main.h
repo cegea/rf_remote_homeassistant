@@ -1,7 +1,6 @@
 #ifndef main_h
 #define main_h
 
-#include "secrets.h"
 #include "remote_rf.h"
 
 // #if !( defined(ARDUINO_RASPBERRY_PI_PICO_W) )
