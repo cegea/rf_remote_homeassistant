@@ -141,8 +141,9 @@ bool __connectToWifi()
   // check for the WiFi module:
   if (WiFi.status() == WL_NO_MODULE)
   {
+#ifdef DEBUG_MQTT
     DEBUG_APPLICATION_PORT.println("Communication with WiFi module failed!");
-
+#endif
     // don't continue
     while (true);
   }

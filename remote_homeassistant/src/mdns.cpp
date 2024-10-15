@@ -24,10 +24,11 @@ void setup_mdns(MDNS& mdns, void (*callback)(const char*, IPAddress)) {
 void loop_mdns(MDNS& mdns, const char* hostname) {   
   // Check if mDNS is already resolving a host name
   if (!mdns.isResolvingName()) {
+#ifdef DEBUG_PROVISIONING
     DEBUG_APPLICATION_PORT.print("Resolving '");
     DEBUG_APPLICATION_PORT.print(hostname);
     DEBUG_APPLICATION_PORT.println("' via Multicast DNS (Bonjour)...");
-    
+#endif  
     // Resolve the host name via mDNS
     mdns.resolveName(hostname, TIMEOUT);
   }  

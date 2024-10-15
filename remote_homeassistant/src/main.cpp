@@ -32,7 +32,8 @@ void setup1()
 	DEBUG_APPLICATION_PORT.setRX(1);
     DEBUG_APPLICATION_PORT.setTX(0);
     DEBUG_APPLICATION_PORT.begin(9600);
-	mutex_init(&remoteDataMutex);
+    DEBUG_APPLICATION_PORT.println("\n[C1]Starting REMOTE RF");
+	// mutex_init(&remoteDataMutex);
 	remote.cc1101initialize();
     DEBUG_APPLICATION_PORT.println("\n[C1]Starting REMOTE RF");
 }
@@ -46,12 +47,12 @@ void loop1() {
 void setup()
 {
 	DEBUG_APPLICATION_PORT.setRX(1);
-    DEBUG_APPLICATION_PORT.setTX(0);
-    DEBUG_APPLICATION_PORT.begin(9600);
+	DEBUG_APPLICATION_PORT.setTX(0);
+	DEBUG_APPLICATION_PORT.begin(9600);
 
-    EEPROM.begin(EEPROM_SIZE); 
+	EEPROM.begin(EEPROM_SIZE);
 
-    DEBUG_APPLICATION_PORT.println("\n[C0]Starting REMOTE RF");
+	DEBUG_APPLICATION_PORT.println("\n[C0]Starting REMOTE RF");
 
 	provisioning_setup();
 
@@ -78,5 +79,4 @@ void loop()
 	{
 		loop_mqtt();
 	}
-
 }
