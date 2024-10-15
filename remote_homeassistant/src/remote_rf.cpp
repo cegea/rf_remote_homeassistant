@@ -25,8 +25,15 @@ void RemoteRF::cc1101initialize() {
     gpio_init(_gdo0);
     gpio_set_dir(_gdo0, GPIO_OUT);
 
-     ELECHOUSE_cc1101.setSpiPin(_sck, _miso, _mosi, _ss);
-     ELECHOUSE_cc1101.setGDO(_gdo0, _gdo2);
+    // SPI.beginTransaction(spisettings);
+    ELECHOUSE_cc1101.setSpiPin(_sck, _miso, _mosi, _ss);
+    ELECHOUSE_cc1101.setGDO(_gdo0, _gdo2);
+
+    if (ELECHOUSE_cc1101.getCC1101()) {  // Check the CC1101 Spi connection.
+      DEBUG_APPLICATION_PORT.println("[C1] SPI Connection OK");
+    } else {
+      DEBUG_APPLICATION_PORT.println("[C1] SPI Connection NOT OK");
+    }
 
     // Main part to tune CC1101 with proper frequency, modulation and encoding    
     ELECHOUSE_cc1101.Init();                // must be set to initialize the cc1101!
