@@ -14,10 +14,6 @@
 #define F868 868.23
 #define F433 433.92
 
-// #define DEBUG0
-// #define DEBUG
-
-
 // Define the structure for remote control data
 typedef struct {
     const char* id;

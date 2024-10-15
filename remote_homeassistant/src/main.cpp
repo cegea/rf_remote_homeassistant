@@ -13,19 +13,6 @@
 
 RemoteRF remote(SCK, MISO, MOSI, SS, GDO0, GDO2);
 volatile Remote_t remoteControl PSRAM;
-mutex_t remoteDataMutex;
-
-// Declare remotes:
-// Remote_t remoteControl[] = {
-//     {"CHISME_ON", F433, MODULATION_ASK_OOK, CODE_CHISME_ON, 4, 300},
-//     {"CHISME_OFF", F433, MODULATION_ASK_OOK, CODE_CHISME_OFF, 4, 300},
-//     {"INT_DOOR", F868, MODULATION_ASK_OOK, CODE_INTERIOR_DOOR, 8, 215},
-//     {"EXT_DOOR", F868, MODULATION_ASK_OOK, CODE_EXTERIOR_DOOR, 8, 215}
-// };
-
-// Get the size of the remoteControl
-size_t remoteControlArraySize = sizeof(remoteControl);
-// size_t remoteControlArraySize = sizeof(remoteControl) / sizeof(remoteControl[0]);
 
 void setup1()
 {
@@ -33,14 +20,11 @@ void setup1()
     DEBUG_APPLICATION_PORT.setTX(0);
     DEBUG_APPLICATION_PORT.begin(9600);
     DEBUG_APPLICATION_PORT.println("\n[C1]Starting REMOTE RF");
-	// mutex_init(&remoteDataMutex);
 	remote.cc1101initialize();
     DEBUG_APPLICATION_PORT.println("\n[C1]Starting REMOTE RF");
 }
 
 void loop1() {
-	// DEBUG_APPLICATION_PORT.println("\n[C1]LOOP");
-// //   remote.processIncomingCommands(remoteControl,remoteControlArraySize);
   remote.processIncomingCommands();
 }
 

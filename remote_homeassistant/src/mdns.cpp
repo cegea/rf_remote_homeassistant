@@ -4,12 +4,6 @@
 
 // Define the callback function signature (based on what ArduinoMDNS expects)
 // void resolver_callback(const char* name, const IPAddress& ip) {
-//   // Handle the name resolution result here
-//   DEBUG_APPLICATION_PORT.print("Resolved: ");
-//   DEBUG_APPLICATION_PORT.print(name);
-//   DEBUG_APPLICATION_PORT.print(" to IP: ");
-//   DEBUG_APPLICATION_PORT.println(ip);
-// }
 
 // Setup MDNS and pass the callback function as an argument
 void setup_mdns(MDNS& mdns, void (*callback)(const char*, IPAddress)) {  

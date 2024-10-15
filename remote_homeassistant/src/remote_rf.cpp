@@ -21,9 +21,6 @@ void RemoteRF::cc1101initialize() {
     SPI.setTX(_mosi);
     SPI.setSCK(_sck);
     SPI.setCS(_ss);
-    SPI.begin(true);
-
-    SPISettings spisettings(1000000, MSBFIRST, SPI_MODE0);
 
     gpio_init(_gdo0);
     gpio_set_dir(_gdo0, GPIO_OUT);
