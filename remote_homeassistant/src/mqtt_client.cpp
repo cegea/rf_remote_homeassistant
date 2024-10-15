@@ -240,14 +240,7 @@ void __connectToMqtt()
       client.subscribe(TOPIC_TEST_DOWN);
       client.subscribe(TOPIC_COMMAND_DELETE_CREDENTIALS);
       client.subscribe(TOPIC_COMMAND_REBOOT);
-      client.subscribe(TOPIC_RF_FREQ);
       client.subscribe(TOPIC_RF);
-      client.subscribe(TOPIC_RF_ID);
-      client.subscribe(TOPIC_RF_REPLAYS);
-      client.subscribe(TOPIC_RF_PAYLOAD);
-      client.subscribe(TOPIC_RF_SYMBOL_US);
-      client.subscribe(TOPIC_RF_SYMBOL_SEND);
-      client.subscribe(TOPIC_RF_SYMBOL_MODULATION);
       connectedMQTT = true;
     }
   }
@@ -281,19 +274,19 @@ void MQTT_command_server(char* topic){
   {
     client.publish(TOPIC_STATUS, "Data received");
 
-    DynamicJsonDocument doc(MQTT_MAX_PACKET_SIZE);
+    JsonDocument doc;
     DeserializationError error = deserializeJson(doc, inputBuffer);
 
     if (!error) {         
       // Extract values from JSON
-      mutex_enter_blocking(&remoteDataMutex);
+      // mutex_enter_blocking(&remoteDataMutex);
       remoteControl.frequency = doc["freq"].as<float>();
       remoteControl.id = doc["id"].as<const char*>();
       remoteControl.replays = doc["replays"].as<int>();
       remoteControl.code = doc["payload"].as<const char*>();
       remoteControl.symbolDuration_usec = doc["symbol_duration"].as<int>();
       remoteControl.modulation = doc["modulation"].as<byte>();
-
+#ifdef DEBUG_MQTT
       // Now you can use these variables in your program
       DEBUG_APPLICATION_PORT.println("RF Frequency: " + String(remoteControl.frequency, 2));
       DEBUG_APPLICATION_PORT.println("RF ID: " + String(remoteControl.id));
@@ -301,11 +294,12 @@ void MQTT_command_server(char* topic){
       DEBUG_APPLICATION_PORT.println("RF Payload: " + String(remoteControl.code));
       DEBUG_APPLICATION_PORT.println("RF Symbol Duration: " + String(remoteControl.symbolDuration_usec));
       DEBUG_APPLICATION_PORT.println("RF Modulation: " + String(remoteControl.modulation));
-      
-      mutex_exit(&remoteDataMutex); 
+#endif      
+      // mutex_exit(&remoteDataMutex); 
 
-      rp2040.fifo.push(0xffff);
-      
+      rp2040.fifo.push(255);
+
+      client.publish(TOPIC_STATUS, "Data received and pushed to Core1");
     } else {
         client.publish(TOPIC_STATUS, "Failed to parse JSON");
     }
