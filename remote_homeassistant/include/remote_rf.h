@@ -111,6 +111,11 @@ public:
      * @param arraySize The size of the remoteControlsArray.
      */
     void processIncomingCommands(Remote_t remoteControlsArray[], size_t arraySize);
+
+    /**
+     * @brief Process incoming commands from the FIFO using the specified array of remote controls.
+     * 
+     */
     void processIncomingCommands(void);
 
 

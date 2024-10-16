@@ -69,7 +69,7 @@ void RemoteRF::configureFrequency(float frequency) {
   // Configure the frequency
   ELECHOUSE_cc1101.setMHZ(frequency);
   
-  #ifdef DEBUG0
+  #ifdef DEBUG_RADIO
     DEBUG_APPLICATION_PORT.print("Configuring frequency: ");
     DEBUG_APPLICATION_PORT.print(frequency, 2); // Print the frequency with 2 decimal places
     DEBUG_APPLICATION_PORT.println(" MHz");
@@ -79,7 +79,7 @@ void RemoteRF::configureFrequency(float frequency) {
 void RemoteRF::setModulation(byte modulationMode) {
   ELECHOUSE_cc1101.setModulation(modulationMode);
   
-  #ifdef DEBUG0
+  #ifdef DEBUG_RADIO
     DEBUG_APPLICATION_PORT.print("Setting modulation mode: ");
     DEBUG_APPLICATION_PORT.println(modulationMode);
   #endif
@@ -97,7 +97,7 @@ void RemoteRF::transmitRFCode(int symbolDuration_usec, const char* rfCode, int c
 
   hextoascii((byte *)buffer, (byte *)rfCode, strlen(rfCode));  
   
-  #ifdef DEBUG0
+  #ifdef DEBUG_RADIO
     DEBUG_APPLICATION_PORT.print(F("\r\nTransmitting RF code: "));
     for (int i = 0; i < codeSize/2; i++) {
       DEBUG_APPLICATION_PORT.print(buffer[i], HEX);
@@ -118,7 +118,7 @@ void RemoteRF::transmitRFCode(int symbolDuration_usec, const char* rfCode, int c
     }
   }
 
-  #ifdef DEBUG0
+  #ifdef DEBUG_RADIO
     DEBUG_APPLICATION_PORT.print(F("\r\nTransmitting RF code complete.\r\n\r\n"));
   #endif
 
@@ -128,7 +128,7 @@ void RemoteRF::transmitRFCode(int symbolDuration_usec, const char* rfCode, int c
   ELECHOUSE_cc1101.SetTx();
   // pinMode(gdo0pin, INPUT);
 
-  #ifdef DEBUG0
+  #ifdef DEBUG_RADIO
     DEBUG_APPLICATION_PORT.print(F("\r\nTransmitting RF code complete.\r\n\r\n"));
   #endif
 
@@ -150,7 +150,7 @@ void RemoteRF::processIncomingCommands(Remote_t remoteControlsArray[], size_t ar
   int availableFifo = rp2040.fifo.available();
   
   while (availableFifo > 0) {
-    #ifdef DEBUG
+    #ifdef DEBUG_RADIO
     DEBUG_APPLICATION_PORT.print("Ready data from MQTT: ");
     DEBUG_APPLICATION_PORT.println(availableFifo);
     #endif
@@ -168,7 +168,7 @@ void RemoteRF::processIncomingCommands(Remote_t remoteControlsArray[], size_t ar
       // Set modulation
       setModulation(remote->modulation);
       
-      #ifdef DEBUG
+      #ifdef DEBUG_RADIO
       DEBUG_APPLICATION_PORT.printf("MQTT data: %s\n", id);
       DEBUG_APPLICATION_PORT.print("[C1]["); 
       DEBUG_APPLICATION_PORT.print(id);
@@ -178,7 +178,7 @@ void RemoteRF::processIncomingCommands(Remote_t remoteControlsArray[], size_t ar
       // Execute the code with the specified symbol duration
       transmitRFCode(remote->symbolDuration_usec, remote->code, strlen(remote->code), remote->replays);
     } else {
-      #ifdef DEBUG
+      #ifdef DEBUG_RADIO
       DEBUG_APPLICATION_PORT.println("Remote control not found.");
       #endif
     }
@@ -188,8 +188,6 @@ void RemoteRF::processIncomingCommands(Remote_t remoteControlsArray[], size_t ar
 void RemoteRF::processIncomingCommands() {
   // Check for available data in the FIFO
   int availableFifo = rp2040.fifo.available();
-  // mutex_enter_blocking(&remoteDataMutex);
-  // DEBUG_APPLICATION_PORT.print("No data");
   
   while (availableFifo > 0) {
     #ifdef DEBUG_RADIO
@@ -197,8 +195,8 @@ void RemoteRF::processIncomingCommands() {
     DEBUG_APPLICATION_PORT.println(availableFifo);
     #endif
     
-    // Delete flag
-    rp2040.fifo.pop();
+    // Blocking
+    rp2040.fifo.pop(); 
 #ifdef DEBUG_RADIO
     DEBUG_APPLICATION_PORT.println("RF Frequency: " + String(remoteControl.frequency, 2));
     DEBUG_APPLICATION_PORT.println("RF ID: " + String(remoteControl.id));
@@ -222,53 +220,8 @@ void RemoteRF::processIncomingCommands() {
     
     // Execute the code with the specified symbol duration
     transmitRFCode(remoteControl.symbolDuration_usec, remoteControl.code, strlen(remoteControl.code), remoteControl.replays);
-
-    // mutex_exit(&remoteDataMutex); 
   }
 }
-
-// // convert char table to string with hex numbers
-// void RemoteRF::asciitohex(byte *ascii_ptr, byte *hex_ptr,int len)
-// {
-//     byte i,j,k;
-//     for(i = 0; i < len; i++)
-//     {
-//       // high byte first
-//       j = ascii_ptr[i] / 16;
-//       if (j>9) 
-//          { k = j - 10 + 65; }
-//       else 
-//          { k = j + 48; }
-//       hex_ptr[2*i] = k ;
-//       // low byte second
-//       j = ascii_ptr[i] % 16;
-//       if (j>9) 
-//          { k = j - 10 + 65; }
-//       else
-//          { k = j + 48; }
-//       hex_ptr[(2*i)+1] = k ; 
-//     };
-//     hex_ptr[(2*i)+2] = '\0' ; 
-// }
-
-
-// // convert string with hex numbers to array of bytes
-// void RemoteRF::hextoascii(char *ascii_ptr, const char *hex_ptr,int len)
-// {
-//     char i,j;
-//     for(i = 0; i < (len/2); i++)
-//      { 
-//      j = hex_ptr[i*2];
-//      if ((j>47) && (j<58))  ascii_ptr[i] = (j - 48) * 16;
-//      if ((j>64) && (j<71))  ascii_ptr[i] = (j - 55) * 16;
-//      if ((j>96) && (j<103)) ascii_ptr[i] = (j - 87) * 16;
-//      j = hex_ptr[i*2+1];
-//      if ((j>47) && (j<58))  ascii_ptr[i] = ascii_ptr[i]  + (j - 48);
-//      if ((j>64) && (j<71))  ascii_ptr[i] = ascii_ptr[i]  + (j - 55);
-//      if ((j>96) && (j<103)) ascii_ptr[i] = ascii_ptr[i]  + (j - 87);
-//      };
-//     ascii_ptr[i++] = '\0' ;
-// }
 
 void RemoteRF::asciitohex(char *hex, const char *ascii,int len)
 {
