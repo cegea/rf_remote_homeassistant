@@ -5,8 +5,8 @@
 
 /**
  * @brief Set the up scheduler
- *  
+ *
  */
-void setup_scheduler() ;
+void setup_scheduler();
 
-#endif 
+#endif
