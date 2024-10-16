@@ -4,17 +4,19 @@
 #include "main.h"
 
 // Type def
-struct wifi_settings {
+struct wifi_settings
+{
   char ssid[30];
   char password[30];
-} ;
+};
 
-struct mqtt_settings {
+struct mqtt_settings
+{
   char host[30];
   uint16_t port;
   char user[30];
   char passwd[30];
-} ;
+};
 
 // Defines
 #define __WIFI_SETTINGS_SIZE sizeof(struct wifi_settings)
@@ -25,22 +27,41 @@ struct mqtt_settings {
 
 static_assert(__WIFI_SETTINGS_SIZE + __MQTT_SETTINGS_SIZE <= __PROVISIONING_EEPROM_SIZE, "Max size for provisioning reached");
 
+/**
+ * @brief Setup function for provisioning
+ *
+ */
 void provisioning_setup(void);
+
+/**
+ * @brief Main loop of provisioning application
+ *
+ */
 void provisioning_loop(void);
+
+/**
+ * @brief Delete WiFi and MQTT credentials
+ *
+ */
 void provisioning_delete_credentials(void);
+
+/**
+ * @brief Command server over UART
+ *
+ */
 void command_server_provisioning(void);
 
 /**
  * @brief Read from EEPROM the MQTT data
- * 
- * @return mqtt_settings 
+ *
+ * @return mqtt_settings
  */
 mqtt_settings read_EEPROM_mqtt_credentials(void);
 
 /**
  * @brief Read from EEPROM the MQTT data
- * 
- * @return wifi_settings 
+ *
+ * @return wifi_settings
  */
 wifi_settings read_EEPROM_wifi_credentials(void);
 
