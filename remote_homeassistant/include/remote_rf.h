@@ -15,11 +15,12 @@
 #define F433 433.92
 
 // Define the structure for remote control data
-typedef struct {
-    const char* id;
+typedef struct
+{
+    const char *id;
     float frequency;
     byte modulation;
-    const char* code;
+    const char *code;
     int replays;
     int symbolDuration_usec;
 } Remote_t;
@@ -32,7 +33,6 @@ extern mutex_t remoteDataMutex;
 class RemoteRF
 {
 public:
-
     // Class constructor
     RemoteRF(uint8_t sck, uint8_t miso, uint8_t mosi, uint8_t ss, uint8_t gdo0, uint8_t gdo2);
 
@@ -84,11 +84,11 @@ public:
      * @param codeSize Size of the RF code buffer.
      * @param numReplays Number of times to replay the RF code.
      */
-    void transmitRFCode(int symbolDuration_usec, const char* rfCode, int codeSize, int numReplays);
+    void transmitRFCode(int symbolDuration_usec, const char *rfCode, int codeSize, int numReplays);
 
     /**
      * Find a remote control by its ID in the specified array of remote controls.
-     * 
+     *
      * This function searches for a remote control in the specified array of `Remote_t`
      * structures based on the provided `id`. If a matching remote control is found, a
      * pointer to the `Remote_t` structure is returned; otherwise, NULL is returned.
@@ -98,12 +98,12 @@ public:
      * @param arraySize The size of the remoteControlsArray.
      * @return A pointer to the matching `Remote_t` structure or NULL if not found.
      */
-    Remote_t* findRemoteControlByID(char* id, Remote_t remoteControlsArray[], size_t arraySize);
+    Remote_t *findRemoteControlByID(char *id, Remote_t remoteControlsArray[], size_t arraySize);
 
     /**
      * Process incoming commands from the FIFO using the specified array of remote controls.
-     * 
-     * This function processes incoming commands retrieved from the FIFO and executes them. 
+     *
+     * This function processes incoming commands retrieved from the FIFO and executes them.
      * It reads commands from the FIFO, searches for the matching remote control by ID in
      * the specified array, sets the frequency, and executes the code (if DEBUG is defined).
      *
@@ -114,23 +114,20 @@ public:
 
     /**
      * @brief Process incoming commands from the FIFO using the specified array of remote controls.
-     * 
+     *
      */
     void processIncomingCommands(void);
 
-
 private:
-
     uint8_t _sck;
     uint8_t _miso;
     uint8_t _mosi;
-    uint8_t _ss; 
+    uint8_t _ss;
     uint8_t _gdo0;
     uint8_t _gdo2;
 
-    void asciitohex(char *hex, const char *ascii,int len);
-    void hextoascii(byte *ascii_ptr, byte *hex_ptr,int len);
+    void asciitohex(char *hex, const char *ascii, int len);
+    void hextoascii(byte *ascii_ptr, byte *hex_ptr, int len);
 };
-
 
 #endif
