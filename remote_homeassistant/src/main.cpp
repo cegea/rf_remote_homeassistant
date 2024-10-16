@@ -8,8 +8,7 @@
 #include <EEPROM.h>
 #include "scheduler.h"
 
-
-//Declare remoteRF
+// Declare remoteRF
 
 RemoteRF remote(SCK, MISO, MOSI, SS, GDO0, GDO2);
 volatile Remote_t remoteControl PSRAM;
@@ -17,15 +16,17 @@ volatile Remote_t remoteControl PSRAM;
 void setup1()
 {
 	DEBUG_APPLICATION_PORT.setRX(1);
-    DEBUG_APPLICATION_PORT.setTX(0);
-    DEBUG_APPLICATION_PORT.begin(9600);
-    DEBUG_APPLICATION_PORT.println("\n[C1]Starting REMOTE RF");
+	DEBUG_APPLICATION_PORT.setTX(0);
+	DEBUG_APPLICATION_PORT.begin(9600);
+
+	DEBUG_APPLICATION_PORT.println("\n[C1]Starting REMOTE RF");
+
 	remote.cc1101initialize();
-    DEBUG_APPLICATION_PORT.println("\n[C1]Starting REMOTE RF");
 }
 
-void loop1() {
-  remote.processIncomingCommands();
+void loop1()
+{
+	remote.processIncomingCommands();
 }
 
 void setup()
