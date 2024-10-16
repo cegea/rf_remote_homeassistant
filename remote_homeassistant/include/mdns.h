@@ -7,18 +7,18 @@
 
 /**
  * @brief Set the up mdns object
- * 
- * @param mdns 
- * @param callback 
+ *
+ * @param mdns
+ * @param callback
  */
-void setup_mdns(MDNS& mdns, void (*callback)(const char*, IPAddress)) ;
+void setup_mdns(MDNS &mdns, void (*callback)(const char *, IPAddress));
 
 /**
  * @brief Run recursively until hostname is found
- * 
- * @param mdns 
- * @param hostname 
+ *
+ * @param mdns
+ * @param hostname
  */
-void loop_mdns(MDNS& mdns, const char* hostname);
+void loop_mdns(MDNS &mdns, const char *hostname);
 
-#endif 
+#endif
