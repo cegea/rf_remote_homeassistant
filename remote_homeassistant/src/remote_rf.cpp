@@ -18,7 +18,7 @@ RemoteRF::RemoteRF(uint8_t sck, uint8_t miso, uint8_t mosi, uint8_t ss, uint8_t 
 void RemoteRF::cc1101initialize()
 {
 	// initializing library with custom pins selected
-
+#ifdef ARDUINO_RASPBERRY_PI_PICO_W
 	SPI.setRX(_miso);
 	SPI.setTX(_mosi);
 	SPI.setSCK(_sck);
@@ -26,7 +26,8 @@ void RemoteRF::cc1101initialize()
 
 	gpio_init(_gdo0);
 	gpio_set_dir(_gdo0, GPIO_OUT);
-
+#elif defined(ARDUINO_LOLIN32_LITE)
+#endif
 	// SPI.beginTransaction(spisettings);
 	ELECHOUSE_cc1101.setSpiPin(_sck, _miso, _mosi, _ss);
 	ELECHOUSE_cc1101.setGDO(_gdo0, _gdo2);
@@ -159,11 +160,11 @@ Remote_t *RemoteRF::findRemoteControlByID(char *id, Remote_t remoteControlsArray
 	return NULL; // Remote control not found
 }
 
+#ifdef ARDUINO_RASPBERRY_PI_PICO_W
 void RemoteRF::processIncomingCommands(Remote_t remoteControlsArray[], size_t arraySize)
 {
 	// Check for available data in the FIFO
 	int availableFifo = rp2040.fifo.available();
-
 	while (availableFifo > 0)
 	{
 #ifdef DEBUG_RADIO
@@ -203,12 +204,16 @@ void RemoteRF::processIncomingCommands(Remote_t remoteControlsArray[], size_t ar
 		}
 	}
 }
+#endif
 
 void RemoteRF::processIncomingCommands()
 {
+#ifdef ARDUINO_RASPBERRY_PI_PICO_W
 	// Check for available data in the FIFO
 	int availableFifo = rp2040.fifo.available();
-
+#elif defined(ARDUINO_LOLIN32_LITE)
+	int availableFifo = 0; // TODO: Add sync for ESP32
+#endif
 	while (availableFifo > 0)
 	{
 #ifdef DEBUG_RADIO
@@ -217,7 +222,10 @@ void RemoteRF::processIncomingCommands()
 #endif
 
 		// Blocking
+#if defined(ARDUINO_RASPBERRY_PI_PICO_W)
 		rp2040.fifo.pop();
+#endif
+
 #ifdef DEBUG_RADIO
 		DEBUG_APPLICATION_PORT.println("RF Frequency: " + String(remoteControl.frequency, 2));
 		DEBUG_APPLICATION_PORT.println("RF ID: " + String(remoteControl.id));

@@ -25,10 +25,11 @@ typedef struct
     int symbolDuration_usec;
 } Remote_t;
 
+#ifdef ARDUINO_RASPBERRY_PI_PICO_W
 extern volatile Remote_t remoteControl PSRAM;
-
-// Declare the mutex for accessing remoteData
-extern mutex_t remoteDataMutex;
+#elif defined(ARDUINO_LOLIN32_LITE)
+extern volatile Remote_t remoteControl;
+#endif
 
 class RemoteRF
 {

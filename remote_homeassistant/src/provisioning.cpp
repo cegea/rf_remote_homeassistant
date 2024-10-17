@@ -1,6 +1,9 @@
 #include <WebServer.h>
 #include <WiFi.h>
+#ifdef ARDUINO_RASPBERRY_PI_PICO_W
 #include "RP2040.h"
+#elif defined(ARDUINO_LOLIN32_LITE)
+#endif
 #include "provisioning.h"
 #include <EEPROM.h>
 #include "html_content.h"

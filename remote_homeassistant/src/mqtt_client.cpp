@@ -1,10 +1,14 @@
 #include <WiFi.h>
 #include <PubSubClient.h>
-#include <SRAM.h>
 #include <string>
 #include <ArduinoJson.h>
 #include "mqtt_client.h"
+#ifdef ARDUINO_RASPBERRY_PI_PICO_W
 #include "RP2040.h"
+#elif defined(ARDUINO_LOLIN32_LITE)
+#include "xtensa/core-macros.h"
+#include <ESP32Ping.h>
+#endif
 #include "mdns.h"
 #include "provisioning.h"
 #include "remote_rf.h"
@@ -64,7 +68,11 @@ bool connectedWiFi = false;
 bool connectedMQTT = false;
 int status = WL_IDLE_STATUS;
 bool newMsg = false;
+#ifdef ARDUINO_RASPBERRY_PI_PICO_W
 char inputBuffer[MQTT_MAX_PACKET_SIZE] PSRAM; // Buffer for storing data
+#elif defined(ARDUINO_LOLIN32_LITE)
+char inputBuffer[MQTT_MAX_PACKET_SIZE]; // Buffer for storing data
+#endif
 
 // Objects declaration
 WiFiUDP udp;
@@ -107,7 +115,12 @@ void __mqtt_callback(char *topic, byte *payload, unsigned int length)
 	else
 	{
 		bzero(inputBuffer, sizeof(inputBuffer));
+#ifdef ARDUINO_RASPBERRY_PI_PICO_W
 		rp2040.memcpyDMA(inputBuffer, payload, length);
+#elif defined(ARDUINO_LOLIN32_LITE)
+		memcpy(inputBuffer, payload, length);
+#endif
+
 #ifdef DEBUG_MQTT
 		DEBUG_APPLICATION_PORT.print("\n[Core 1][Topic:");
 		DEBUG_APPLICATION_PORT.print(topic);
@@ -141,7 +154,7 @@ void __printWifiStatus()
 	DEBUG_APPLICATION_PORT.println(" dBm");
 #endif
 }
-
+#ifdef ARDUINO_RASPBERRY_PI_PICO_W
 bool __connectToWifi()
 {
 	wifi_settings user_wifi = {};
@@ -180,7 +193,11 @@ bool __connectToWifi()
 #ifdef DEBUG_PROVISIONING
 		DEBUG_APPLICATION_PORT.println("Resetting. Can't connect to any WiFi");
 #endif
-		NVIC_SystemReset();
+#ifdef ARDUINO_RASPBERRY_PI_PICO_W
+		rp2040.reboot();
+#elif defined(ARDUINO_LOLIN32_LITE)
+		ESP.restart();
+#endif
 	}
 
 	__printWifiStatus();
@@ -189,6 +206,8 @@ bool __connectToWifi()
 
 	return (status == WL_CONNECTED);
 }
+#elif defined(ARDUINO_LOLIN32_LITE)
+#endif
 
 bool __isWiFiConnected()
 {
@@ -197,7 +216,11 @@ bool __isWiFiConnected()
 	DEBUG_APPLICATION_PORT.println("\nGateway IP: ");
 	DEBUG_APPLICATION_PORT.print(WiFi.gatewayIP());
 #endif
+#ifdef ARDUINO_RASPBERRY_PI_PICO_W
 	if (WiFi.ping(WiFi.gatewayIP(), theTTL) == theTTL)
+#elif defined(ARDUINO_LOLIN32_LITE)
+	if (Ping.ping(WiFi.gatewayIP(), theTTL) == theTTL)
+#endif
 	{
 		return true;
 	}
@@ -230,8 +253,11 @@ void __connectToMqtt()
 			DEBUG_APPLICATION_PORT.println(__ip);
 #endif
 		}
-
+#ifdef ARDUINO_RASPBERRY_PI_PICO_W
 		if (WiFi.ping(__ip, theTTL) == theTTL)
+#elif defined(ARDUINO_LOLIN32_LITE)
+		if (Ping.ping(__ip, theTTL) == theTTL)
+#endif
 		{
 #ifdef DEBUG_PROVISIONING
 			DEBUG_APPLICATION_PORT.println("\nPing OK");
@@ -264,8 +290,13 @@ void MQTT_publish_time_since_init()
 {
 	if (connectedMQTT)
 	{
+#ifdef ARDUINO_RASPBERRY_PI_PICO_W
 		client.publish("remote/init_since",
 					   std::to_string(rp2040.getCycleCount64()).c_str());
+#elif defined(ARDUINO_LOLIN32_LITE)
+		client.publish("remote/init_since",
+					   std::to_string(XTHAL_GET_CCOUNT()).c_str());
+#endif
 	}
 }
 
@@ -279,7 +310,11 @@ void MQTT_command_server(char *topic)
 	else if (strcmp(topic, TOPIC_COMMAND_REBOOT) == 0)
 	{
 		client.publish(TOPIC_STATUS, "rebooting");
+#ifdef ARDUINO_RASPBERRY_PI_PICO_W
 		rp2040.reboot();
+#elif defined(ARDUINO_LOLIN32_LITE)
+		ESP.restart();
+#endif
 	}
 	else if (strcmp(topic, TOPIC_COMMAND_DELETE_CREDENTIALS) == 0)
 	{
@@ -310,7 +345,11 @@ void MQTT_command_server(char *topic)
 			DEBUG_APPLICATION_PORT.println("RF Symbol Duration: " + String(remoteControl.symbolDuration_usec));
 			DEBUG_APPLICATION_PORT.println("RF Modulation: " + String(remoteControl.modulation));
 #endif
+#ifdef ARDUINO_RASPBERRY_PI_PICO_W
 			rp2040.fifo.push(255);
+#elif defined(ARDUINO_LOLIN32_LITE)
+			// TODO: Sync to RF
+#endif
 
 			client.publish(TOPIC_STATUS, "Data received and pushed to Core1");
 		}

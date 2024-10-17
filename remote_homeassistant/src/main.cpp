@@ -11,14 +11,32 @@
 // Declare remoteRF
 
 RemoteRF remote(SCK, MISO, MOSI, SS, GDO0, GDO2);
+#ifdef ARDUINO_RASPBERRY_PI_PICO_W
 volatile Remote_t remoteControl PSRAM;
+#elif defined(ARDUINO_LOLIN32_LITE)
+volatile Remote_t remoteControl;
+#endif
 
-void setup1()
-{
+/**
+ * @brief Initialize Serial port
+ * 
+ */
+void __init_serial(void);
+
+void __init_serial(void){
+#ifdef ARDUINO_RASPBERRY_PI_PICO_W
 	DEBUG_APPLICATION_PORT.setRX(1);
 	DEBUG_APPLICATION_PORT.setTX(0);
 	DEBUG_APPLICATION_PORT.begin(9600);
+#elif defined(ARDUINO_LOLIN32_LITE)
+	DEBUG_APPLICATION_PORT.begin(9600);
+#endif
+}
 
+#ifndef ARDUINO_LOLIN32_LITE
+void setup1()
+{
+	__init_serial();
 	DEBUG_APPLICATION_PORT.println("\n[C1]Starting REMOTE RF");
 
 	remote.cc1101initialize();
@@ -28,14 +46,17 @@ void loop1()
 {
 	remote.processIncomingCommands();
 }
+#endif
 
 void setup()
 {
-	DEBUG_APPLICATION_PORT.setRX(1);
-	DEBUG_APPLICATION_PORT.setTX(0);
-	DEBUG_APPLICATION_PORT.begin(9600);
-
+	__init_serial();
 	EEPROM.begin(EEPROM_SIZE);
+
+#ifdef ARDUINO_LOLIN32_LITE
+	DEBUG_APPLICATION_PORT.println("\n[C1]Starting REMOTE RF");
+	remote.cc1101initialize();
+#endif
 
 	DEBUG_APPLICATION_PORT.println("\n[C0]Starting REMOTE RF");
 
@@ -64,4 +85,7 @@ void loop()
 	{
 		loop_mqtt();
 	}
+#ifdef ARDUINO_LOLIN32_LITE
+	remote.processIncomingCommands();
+#endif
 }
