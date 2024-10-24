@@ -3,11 +3,14 @@
 
 #include "main.h"
 
+#define SSID_LEN 30
+#define PWD_LEN 30
+
 // Type def
 struct wifi_settings
 {
-  char ssid[30];
-  char password[30];
+  char ssid[SSID_LEN];
+  char password[PWD_LEN];
 };
 
 struct mqtt_settings
