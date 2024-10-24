@@ -68,4 +68,12 @@ mqtt_settings read_EEPROM_mqtt_credentials(void);
  */
 wifi_settings read_EEPROM_wifi_credentials(void);
 
+/**
+ * @brief Read EEPROM and compare with empty EEPROM values
+ * 
+ * @return true When there are credentials
+ * @return false When there are no credentials
+ */
+bool check_provisioning_done(void);
+
 #endif

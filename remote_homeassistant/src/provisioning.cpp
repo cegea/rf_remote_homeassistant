@@ -28,6 +28,15 @@ void __wifi_ap(void);
  */
 void __print_credentials(void);
 
+/**
+ * @brief Compare wifi setting and return 0 if equal
+ * 
+ * @param wifi1 
+ * @param wifi2 
+ * @return uint8_t 
+ */
+uint8_t __cmp_wifi_settings(wifi_settings wifi1, wifi_settings wifi2);
+
 // Global
 WebServer server(80);
 
@@ -144,6 +153,34 @@ wifi_settings read_EEPROM_wifi_credentials()
 	return __user_wifi;
 }
 
+uint8_t __cmp_wifi_settings(wifi_settings wifi1, wifi_settings wifi2){
+	for (size_t i = 0; i < SSID_LEN; i++)
+	{	
+		if (wifi1.ssid[i] != wifi2.ssid[i])
+		{
+			return 1;
+		}
+		
+	}
+	return 0;
+	
+}
+
+bool check_provisioning_done(){
+	wifi_settings empty_wifi = {};
+
+	memset(empty_wifi.ssid, 0xFF, sizeof(empty_wifi.ssid));
+	memset(empty_wifi.password, 0xFF, sizeof(empty_wifi.password));
+
+	if (__cmp_wifi_settings(__user_wifi, empty_wifi) == 0)
+	{
+		return false;
+	}
+	else{
+		return true;
+	}
+}
+
 void provisioning_setup()
 {
 
@@ -153,7 +190,11 @@ void provisioning_setup()
 	read_EEPROM_wifi_credentials();
 	read_EEPROM_mqtt_credentials();
 
-	__wifi_ap();
+	if (check_provisioning_done())
+	{
+		__wifi_ap();
+	}
+	
 
 	byte tries = 0;
 	while (WiFi.status() != WL_CONNECTED)
