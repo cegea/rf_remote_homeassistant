@@ -1,6 +1,11 @@
 # Remote RF for HomeAssistant
 RF remote based on RP2040 and CC1101. For those sub-gigahertz remotes laying around. 
 
+## Disclaimer
+This a personal project to learn about IoT and radio.
+
+There are more mature projects out there that work "out of the box". Take a look at [ESPHome](https://esphome.io/).
+
 ## Acknowledgements
 ### CC1101-TOOL
 
