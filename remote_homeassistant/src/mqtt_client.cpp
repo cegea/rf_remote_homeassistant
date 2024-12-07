@@ -60,8 +60,6 @@ void __connectToMqtt(void);
 static uint8_t theTTL = 10;
 
 // Control and data variables
-bool connectedWiFi = false;
-bool connectedMQTT = false;
 int status = WL_IDLE_STATUS;
 bool newMsg = false;
 char inputBuffer[MQTT_MAX_PACKET_SIZE] PSRAM; // Buffer for storing data
@@ -185,8 +183,6 @@ bool __connectToWifi()
 
 	__printWifiStatus();
 
-	connectedWiFi = (status == WL_CONNECTED);
-
 	return (status == WL_CONNECTED);
 }
 
@@ -262,7 +258,7 @@ void __connectToMqtt()
 
 void MQTT_publish_time_since_init()
 {
-	if (connectedMQTT)
+	if (client.connected())
 	{
 		client.publish("remote/init_since",
 					   std::to_string(rp2040.getCycleCount64()).c_str());
