@@ -74,6 +74,8 @@ void RemoteRF::configureFrequency(float frequency)
 {
 	// Configure the frequency
 	ELECHOUSE_cc1101.setMHZ(frequency);
+	// Reconfigure tx power for the new frequency
+	ELECHOUSE_cc1101.setPA(12);
 
 #ifdef DEBUG_RADIO
 	DEBUG_APPLICATION_PORT.print("Configuring frequency: ");
