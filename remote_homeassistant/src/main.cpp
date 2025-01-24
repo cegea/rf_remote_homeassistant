@@ -60,8 +60,25 @@ void loop()
 	{
 		provisioning_loop();
 	}
-	else if (WiFi.getMode() == WIFI_STA && WiFi.status() == WL_CONNECTED)
+	else if (WiFi.getMode() == WIFI_STA)
 	{
-		loop_mqtt();
+		switch (WiFi.status())
+		{
+		case WL_CONNECTED:
+			loop_mqtt();
+			break;
+
+		// For Pico W 
+		case WL_IDLE_STATUS:
+		case WL_DISCONNECTED:
+		case WL_CONNECT_FAILED:
+			// Try to reconnect
+			provisioning_loop();
+			break;
+		
+		default:
+			break;
+		}
+		
 	}
 }
