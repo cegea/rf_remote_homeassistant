@@ -2,9 +2,6 @@
 *.o
 *.elf
 
-# Ignore any file named "secrets.h"
-secrets.h
-
 # Arduino build artifacts
 *.hex
 *.bin
@@ -15,3 +12,7 @@ secrets.h
 /*.elf
 /*.hex
 *.db
+.cache
+
+# PIO compilation DB
+compile_commands.json
