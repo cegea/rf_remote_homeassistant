@@ -206,8 +206,8 @@ void __connectToMqtt()
 	mqtt_settings user_mqtt = {};
 	user_mqtt = read_EEPROM_mqtt_credentials();
 
-	uint8_t retries = 0;
 	const char *hostname = user_mqtt.host;
+	IPAddress mqttServerIp = INADDR_NONE;
 
 	if (__isWiFiConnected())
 	{
@@ -215,8 +215,17 @@ void __connectToMqtt()
 #ifdef DEBUG_PROVISIONING
 		DEBUG_APPLICATION_PORT.println("\nTry to connect to MQTT. Ping to server");
 #endif
-		if (__ip != INADDR_NONE)
+		if (mqttServerIp.fromString(hostname))
 		{
+			__ip = mqttServerIp;
+#ifdef DEBUG_PROVISIONING
+			DEBUG_APPLICATION_PORT.print("\nMQTT host is a literal IP: ");
+			DEBUG_APPLICATION_PORT.println(__ip);
+#endif
+		}
+		else
+		{
+			__ip = INADDR_NONE;
 			loop_mdns(mdns, hostname);
 #ifdef DEBUG_PROVISIONING
 			DEBUG_APPLICATION_PORT.print("Resolved: ");
@@ -227,7 +236,7 @@ void __connectToMqtt()
 #endif
 		}
 
-		if (WiFi.ping(__ip, theTTL) == theTTL)
+		if (__ip != INADDR_NONE && WiFi.ping(__ip, theTTL) == theTTL)
 		{
 #ifdef DEBUG_PROVISIONING
 			DEBUG_APPLICATION_PORT.println("\nPing OK");
@@ -236,8 +245,9 @@ void __connectToMqtt()
 		}
 		else
 		{
+			client.setServer(hostname, user_mqtt.port);
 #ifdef DEBUG_PROVISIONING
-			DEBUG_APPLICATION_PORT.println("\nPing NOT OK");
+			DEBUG_APPLICATION_PORT.println("\nPing NOT OK. Using host string directly.");
 #endif
 		}
 

@@ -8,6 +8,70 @@
 wifi_settings __user_wifi = {};
 mqtt_settings __user_mqtt = {};
 
+void __copy_string(char *destination, size_t destinationSize, const String &source)
+{
+	const size_t copyLength = min(destinationSize - 1, source.length());
+	memcpy(destination, source.c_str(), copyLength);
+	destination[copyLength] = '\0';
+}
+
+String __normalize_mqtt_host(String mqttHost, uint16_t *mqttPort)
+{
+	mqttHost.trim();
+
+	const int schemeSeparator = mqttHost.indexOf("://");
+	if (schemeSeparator >= 0)
+	{
+		mqttHost.remove(0, schemeSeparator + 3);
+	}
+
+	const int credentialsSeparator = mqttHost.lastIndexOf('@');
+	if (credentialsSeparator >= 0)
+	{
+		mqttHost.remove(0, credentialsSeparator + 1);
+	}
+
+	const int pathSeparator = mqttHost.indexOf('/');
+	if (pathSeparator >= 0)
+	{
+		mqttHost.remove(pathSeparator);
+	}
+
+	const int querySeparator = mqttHost.indexOf('?');
+	if (querySeparator >= 0)
+	{
+		mqttHost.remove(querySeparator);
+	}
+
+	const int firstColon = mqttHost.indexOf(':');
+	const int lastColon = mqttHost.lastIndexOf(':');
+	if (firstColon > 0 && firstColon == lastColon)
+	{
+		const String portText = mqttHost.substring(lastColon + 1);
+		bool isNumericPort = portText.length() > 0;
+
+		for (size_t index = 0; index < portText.length(); index++)
+		{
+			if (!isDigit(portText[index]))
+			{
+				isNumericPort = false;
+				break;
+			}
+		}
+
+		if (isNumericPort)
+		{
+			if (*mqttPort == 0)
+			{
+				*mqttPort = static_cast<uint16_t>(atoi(portText.c_str()));
+			}
+			mqttHost.remove(lastColon);
+		}
+	}
+
+	return mqttHost;
+}
+
 // Private functions
 
 /**
@@ -58,27 +122,31 @@ void __print_credentials()
 
 void __handlePortal()
 {
-	char port[10];
 	if (server.method() == HTTP_POST)
 	{
+		String mqttHost = server.arg("mqtt_host");
+		String mqttPort = server.arg("mqtt_port");
+		uint16_t parsedMqttPort = 0;
 
-		strncpy(__user_wifi.ssid, server.arg("ssid").c_str(), sizeof(__user_wifi.ssid));
-		__user_wifi.ssid[server.arg("ssid").length()] = '\0';
+		mqttPort.trim();
+		if (mqttPort.length() > 0)
+		{
+			parsedMqttPort = static_cast<uint16_t>(atoi(mqttPort.c_str()));
+		}
 
-		strncpy(__user_wifi.password, server.arg("password").c_str(), sizeof(__user_wifi.password));
-		__user_wifi.password[server.arg("password").length()] = '\0';
+		mqttHost = __normalize_mqtt_host(mqttHost, &parsedMqttPort);
 
-		strncpy(__user_mqtt.host, server.arg("mqtt_host").c_str(), sizeof(__user_mqtt.host));
-		__user_mqtt.host[server.arg("mqtt_host").length()] = '\0';
+		__copy_string(__user_wifi.ssid, sizeof(__user_wifi.ssid), server.arg("ssid"));
 
-		strncpy(port, server.arg("mqtt_port").c_str(), sizeof(port));
-		__user_mqtt.port = atoi(port);
+		__copy_string(__user_wifi.password, sizeof(__user_wifi.password), server.arg("password"));
 
-		strncpy(__user_mqtt.user, server.arg("mqtt_user").c_str(), sizeof(__user_mqtt.user));
-		__user_mqtt.user[server.arg("mqtt_user").length()] = '\0';
+		__copy_string(__user_mqtt.host, sizeof(__user_mqtt.host), mqttHost);
 
-		strncpy(__user_mqtt.passwd, server.arg("mqtt_pswd").c_str(), sizeof(__user_mqtt.passwd));
-		__user_mqtt.passwd[server.arg("mqtt_pswd").length()] = '\0';
+		__user_mqtt.port = parsedMqttPort;
+
+		__copy_string(__user_mqtt.user, sizeof(__user_mqtt.user), server.arg("mqtt_user"));
+
+		__copy_string(__user_mqtt.passwd, sizeof(__user_mqtt.passwd), server.arg("mqtt_pswd"));
 
 		__print_credentials();
 
